@@ -57,10 +57,13 @@ wss.on("connection", (ws) => {
     }
   });
 
-  ws.on("close", () => {
+  
+  ws.on("close", (code, reason) => {
+    console.log("WS client disconnected", { code, reason: reason?.toString() });
     if (ws === esp32Socket) esp32Socket = null;
-    console.log("WS client disconnected");
   });
+  ws.on("error", (err) => console.error("WS error:", err?.message || err));
+
 });
 
 const interval = setInterval(() => {
