@@ -1,28 +1,365 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>RFID Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RFID Reader</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 600px;
+      width: 100%;
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 10px;
+    }
+    
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ccc;
+      animation: pulse 2s infinite;
+    }
+    
+    .status-dot.connected {
+      background: #4CAF50;
+    }
+    
+    .status-dot.esp32-online {
+      background: #2196F3;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .status-text {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    button {
+      width: 100%;
+      padding: 15px;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-bottom: 20px;
+    }
+    
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .results {
+      margin-top: 20px;
+    }
+    
+    .results h2 {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 15px;
+    }
+    
+    .tag-count {
+      background: #e3f2fd;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-weight: bold;
+      color: #1976d2;
+    }
+    
+    .tags-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .tag-item {
+      background: #f9f9f9;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .tag-id {
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      color: #333;
+      word-break: break-all;
+    }
+    
+    .tag-rssi {
+      background: #667eea;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    
+    .no-tags {
+      text-align: center;
+      padding: 30px;
+      color: #999;
+      font-style: italic;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .error {
+      background: #ffebee;
+      color: #c62828;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #c62828;
+    }
+  </style>
 </head>
 <body>
-  <h2>RFID 読み取りテスト</h2>
-  <button onclick="readRFID()">読み込み</button>
-  <p>受信UID：</p>
-  <div id="uid">---</div>
+  <div class="container">
+    <h1>📡 RFID Reader</h1>
+    
+    <div class="status">
+      <div class="status-dot" id="ws-status"></div>
+      <div class="status-text" id="ws-text">接続中...</div>
+      <div style="margin-left: auto;">
+        <div class="status-dot" id="esp32-status"></div>
+      </div>
+      <div class="status-text" id="esp32-text">ESP32: 待機中</div>
+    </div>
+    
+    <div id="error-message" style="display: none;" class="error"></div>
+    
+    <button id="read-btn" onclick="readRFID()" disabled>
+      読み込み
+    </button>
+    
+    <div class="results">
+      <h2>読み取り結果</h2>
+      <div class="tag-count" id="tag-count">タグ数: 0</div>
+      <div class="tags-list" id="tags-list">
+        <div class="no-tags">まだタグが読み取られていません</div>
+      </div>
+    </div>
+  </div>
 
   <script>
-    const ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
-    ws.onopen = () => console.log("WS connected");
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === "rfid_result") {
-        document.getElementById("uid").innerText = data.uid ?? "(uidなし)";
-      }
-    };
-    function readRFID() {
-      ws.send(JSON.stringify({ type: "rfid_read" }));
+    let ws = null;
+    let isReading = false;
+    let wsConnected = false;
+    let esp32Online = false;
+
+    function connectWebSocket() {
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${location.host}`;
+      
+      console.log('Connecting to:', wsUrl);
+      ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+        wsConnected = true;
+        updateStatus();
+        hideError();
+      };
+      
+      ws.onmessage = (event) => {
+        console.log('Received:', event.data);
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'rfid_result') {
+            displayResults(data);
+            isReading = false;
+            updateButton();
+          } else if (data.type === 'esp_status') {
+            esp32Online = (data.status === 'online');
+            updateStatus();
+          } else if (data.type === 'error') {
+            showError(data.message);
+            isReading = false;
+            updateButton();
+          }
+        } catch (e) {
+          console.error('JSON parse error:', e);
+        }
+      };
+      
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        showError('WebSocket接続エラー');
+      };
+      
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        wsConnected = false;
+        esp32Online = false;
+        updateStatus();
+        
+        // 3秒後に再接続
+        setTimeout(() => {
+          console.log('Reconnecting...');
+          connectWebSocket();
+        }, 3000);
+      };
     }
+    
+    function updateStatus() {
+      const wsStatusDot = document.getElementById('ws-status');
+      const wsText = document.getElementById('ws-text');
+      const esp32StatusDot = document.getElementById('esp32-status');
+      const esp32Text = document.getElementById('esp32-text');
+      
+      if (wsConnected) {
+        wsStatusDot.classList.add('connected');
+        wsText.textContent = 'サーバー: 接続済み';
+      } else {
+        wsStatusDot.classList.remove('connected');
+        wsText.textContent = 'サーバー: 切断';
+      }
+      
+      if (esp32Online) {
+        esp32StatusDot.classList.add('esp32-online');
+        esp32Text.textContent = 'ESP32: オンライン';
+      } else {
+        esp32StatusDot.classList.remove('esp32-online');
+        esp32Text.textContent = 'ESP32: オフライン';
+      }
+      
+      updateButton();
+    }
+    
+    function updateButton() {
+      const btn = document.getElementById('read-btn');
+      
+      if (isReading) {
+        btn.innerHTML = '<span class="loading"></span> 読み取り中...';
+        btn.disabled = true;
+      } else if (wsConnected && esp32Online) {
+        btn.innerHTML = '📖 読み込み';
+        btn.disabled = false;
+      } else {
+        btn.innerHTML = '接続待ち...';
+        btn.disabled = true;
+      }
+    }
+    
+    function showError(message) {
+      const errorDiv = document.getElementById('error-message');
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+      setTimeout(() => {
+        errorDiv.style.display = 'none';
+      }, 5000);
+    }
+    
+    function hideError() {
+      document.getElementById('error-message').style.display = 'none';
+    }
+    
+    function readRFID() {
+      if (!wsConnected || !esp32Online || isReading) return;
+      
+      console.log('Sending rfid_read request');
+      isReading = true;
+      updateButton();
+      hideError();
+      
+      ws.send(JSON.stringify({ type: 'rfid_read' }));
+    }
+    
+    function displayResults(data) {
+      const countDiv = document.getElementById('tag-count');
+      const listDiv = document.getElementById('tags-list');
+      
+      countDiv.textContent = `タグ数: ${data.count || 0}`;
+      
+      if (!data.tags || data.tags.length === 0) {
+        listDiv.innerHTML = '<div class="no-tags">タグが見つかりませんでした</div>';
+        return;
+      }
+      
+      listDiv.innerHTML = '';
+      data.tags.forEach(tag => {
+        const item = document.createElement('div');
+        item.className = 'tag-item';
+        item.innerHTML = `
+          <div class="tag-id">ID: ${tag.id || 'Unknown'}</div>
+          <div class="tag-rssi">RSSI: ${tag.rssi || 'N/A'} dBm</div>
+        `;
+        listDiv.appendChild(item);
+      });
+    }
+    
+    // 初期接続
+    connectWebSocket();
   </script>
 </body>
 </html>
