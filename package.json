@@ -5,12 +5,12 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "npm start"
+    "start": "node server.js"
   },
   "engines": {
     "node": ">=18"
   },
-    "dependencies": {
+  "dependencies": {
     "express": "^4.19.2",
     "ws": "^8.18.0"
   }
