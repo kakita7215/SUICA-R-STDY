@@ -1,118 +1,159 @@
+import express from "express";
+import http from "http";
+import path from "path";
+import { fileURLToPath } from "url";
+import { WebSocketServer } from "ws";
 
-import express from 'express';
-import { createServer } from 'http';
-import { WebSocketServer } from 'ws';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const server = createServer(app);
 
-// --- 安定化オプション（必要に応じてON） ---
-// 直後切断(1005)が出る環境では perMessageDeflate を切ると安定するケースが多い。
-// BTSでは明示OFFにしていないが、相性問題の切り分け用にここではOFFを推奨。
-// あとで挙動が安定したら true に戻してもよい。
-const wss = new WebSocketServer({
+// 静的ファイル配信
+app.use(express.static(path.join(__dirname, "public")));
+
+const server = http.createServer(app);
+const wss = new WebSocketServer({ 
   server,
-  perMessageDeflate: false, // ← まずはOFFで様子見。BTS互換にしたいなら true でも可
-  clientTracking: true
+  perMessageDeflate: false,
+  clientTracking: true,
+  maxPayload: 1024 * 1024
 });
 
-// Keep-alive の余裕（BTSには無いが安定化のため追加）
-server.keepAliveTimeout = 75_000;
-server.headersTimeout  = 80_000;
+const PORT = process.env.PORT || 3000;
 
-const PORT = process.env.PORT || 10000;
+// ヘルスチェック用
+app.get("/health", (req, res) => {
+  res.type("text/plain").send("WS server running");
+});
 
-// /health は Render のヘルスチェック用（BTSは静的配信。必要なら app.use(express.static(...)) も可）
-app.get('/health', (_req, res) => res.type('text/plain').send('WS server running'));
+let esp32Socket = null;
 
-// 接続管理: BTS同様のモデル
-const clients = {
-  esp32: null,
-  browsers: new Set()
-};
+function heartbeat() { 
+  this.isAlive = true; 
+}
 
-// WS接続
-wss.on('connection', (ws, req) => {
-  // まずはブラウザとして扱う（BTSと同様）
-  clients.browsers.add(ws);
-  console.log('[WS] Connected from:', req.socket.remoteAddress);
-  console.log(`[Browser] Total browsers: ${clients.browsers.size}`);
+wss.on("connection", (ws, req) => {
+  ws.isAlive = true;
+  ws.on("pong", heartbeat);
+  
+  const clientIP = req.socket.remoteAddress;
+  console.log(`[WS] Client connected from ${clientIP}`);
 
-  ws.on('message', (data) => {
-    const raw = data.toString();
-    // console.log('[WS] Raw:', raw);
-    let msg;
-    try { msg = JSON.parse(raw); }
-    catch (e) {
-      console.warn('[WS] JSON parse error:', e);
-      return;
+  ws.on("message", (message) => {
+    let data;
+    try { 
+      data = JSON.parse(message); 
+      console.log(`[WS] Received message type: ${data.type}`);
+    } catch (e) { 
+      console.log("[WS] Invalid JSON received");
+      return; 
     }
 
-    const type = msg?.type;
-    // --- ESP32 登録（BTS: "esp32"、UHF: "esp_online" の両対応） ---
-    if (type === 'esp32' || type === 'esp_online') {
-      if (clients.esp32) {
-        console.log('[ESP32] Closing previous connection');
-        try { clients.esp32.close(); } catch {}
-      }
-      clients.browsers.delete(ws);
-      clients.esp32 = ws;
-      console.log('[ESP32] Registered');
-
-      // BTS 互換の登録確認（ブラウザ側に影響しないよう軽量に）
-      try {
-        ws.send(JSON.stringify({ type: 'registered', message: 'ESP32 registered' }));
-      } catch {}
-      return;
-    }
-
-    // --- ルーティング ---
-    // A) ブラウザ → ESP32: "rfid_read"
-    if (type === 'rfid_read') {
-      if (clients.esp32 && clients.esp32.readyState === 1) {
-        clients.esp32.send(JSON.stringify({ type: 'rfid_read' }));
-      } else {
-        // 必要ならブラウザへ通知
-        if (clients.browsers.has(ws)) {
-          ws.send(JSON.stringify({ type: 'error', message: 'ESP32 not connected' }));
+    // ESP32が接続したことを登録
+    if (data.type === "esp_online") {
+      esp32Socket = ws;
+      console.log("[ESP32] Registered as ESP32");
+      
+      // 全クライアントにESP32接続を通知
+      wss.clients.forEach((client) => {
+        if (client !== ws && client.readyState === 1) {
+          client.send(JSON.stringify({ 
+            type: "esp_status", 
+            status: "online" 
+          }));
         }
+      });
+      return;
+    }
+
+    // ブラウザから読み取りリクエスト
+    if (data.type === "rfid_read") {
+      console.log("[RFID] Read request from browser");
+      if (esp32Socket && esp32Socket.readyState === 1) {
+        console.log("[RFID] Forwarding to ESP32");
+        esp32Socket.send(JSON.stringify({ type: "rfid_read" }));
+      } else {
+        console.log("[RFID] ESP32 not connected");
+        ws.send(JSON.stringify({ 
+          type: "error", 
+          message: "ESP32 not connected" 
+        }));
       }
       return;
     }
 
-    // B) ESP32 → ブラウザ: "rfid_result"
-    if (type === 'rfid_result') {
-      let sent = 0;
-      clients.browsers.forEach(bw => {
-        if (bw.readyState === 1) { try { bw.send(JSON.stringify(msg)); sent++; } catch {} }
+    // ESP32からの読み取り結果
+    if (data.type === "rfid_result") {
+      console.log(`[RFID] Result received: ${data.count} tags`);
+      // 全ブラウザクライアントに配信
+      wss.clients.forEach((client) => {
+        if (client !== esp32Socket && client.readyState === 1) {
+          client.send(JSON.stringify(data));
+          console.log("[RFID] Sent result to browser");
+        }
       });
-      // console.log(`[RFID] Sent to ${sent} browser(s)`);
       return;
     }
-
-    // そのほかはログのみ（BTS同様の挙動）
-    console.log('[WS] Unknown type:', type);
   });
 
-  ws.on('close', (code, reason) => {
-    // BTSはコードを出していないが、UHF切断解析のため出す
-    console.log('WS client disconnected', { code, reason: reason?.toString() });
-    if (clients.esp32 === ws) {
-      clients.esp32 = null;
-      console.log('[ESP32] Disconnected');
-    } else {
-      clients.browsers.delete(ws);
-      console.log(`[Browser] Disconnected. Remaining: ${clients.browsers.size}`);
+  ws.on("close", (code, reason) => {
+    console.log(`[WS] Client disconnected: code=${code}, reason=${reason?.toString() || 'none'}`);
+    
+    if (ws === esp32Socket) {
+      esp32Socket = null;
+      console.log("[ESP32] Unregistered");
+      
+      // 全クライアントにESP32切断を通知
+      wss.clients.forEach((client) => {
+        if (client.readyState === 1) {
+          client.send(JSON.stringify({ 
+            type: "esp_status", 
+            status: "offline" 
+          }));
+        }
+      });
     }
   });
 
-  ws.on('error', (err) => {
-    console.error('[WS] error:', err?.message || err);
+  ws.on("error", (err) => {
+    console.error("[WS] Error:", err?.message || err);
   });
 });
 
-// サーバ起動
+// Ping/Pongによる接続維持
+const interval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) {
+      console.log("[WS] Terminating inactive client");
+      return ws.terminate();
+    }
+    ws.isAlive = false;
+    ws.ping(() => {});
+  });
+}, 30000);
+
+wss.on("close", () => clearInterval(interval));
+
+// グレースフルシャットダウン
+function shutdown() {
+  console.log("[Server] Shutting down gracefully...");
+  clearInterval(interval);
+  wss.clients.forEach((ws) => ws.terminate());
+  server.close(() => {
+    console.log("[Server] Closed");
+    process.exit(0);
+  });
+  setTimeout(() => {
+    console.log("[Server] Force exit");
+    process.exit(0);
+  }, 3000);
+}
+
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
+
 server.listen(PORT, () => {
-  console.log(`[Server] Running on port ${PORT}`);
-  console.log(`[Server] Health: http://localhost:${PORT}/health`);
+  console.log(`[Server] Listening on port ${PORT}`);
+  console.log(`[Server] WebSocket endpoint: ws://localhost:${PORT}/`);
 });
