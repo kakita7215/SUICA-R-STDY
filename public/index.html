@@ -719,6 +719,37 @@
       }
     }
 
+    function toNumber(value, fallback){
+      const n = Number(value);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function sendConfig(){
+      if (!ws || ws.readyState !== WebSocket.OPEN){
+        return;
+      }
+
+      const payload = {
+        type: "config",
+        power1: toNumber(power1.value, 0),
+        power2: toNumber(power2.value, 0),
+        power3: toNumber(power3.value, 0),
+        repeat1: toNumber(repeat1.value, 0),
+        repeat2: toNumber(repeat2.value, 0),
+        repeat3: toNumber(repeat3.value, 0),
+        windowMs1: toNumber(windowMs1.value, 0),
+        windowMs2: toNumber(windowMs2.value, 0),
+        windowMs3: toNumber(windowMs3.value, 0),
+        repeat: toNumber(repeatAll.value, 0),
+        windowMs: toNumber(windowAll.value, 0),
+        ant1: antEnabled[0],
+        ant2: antEnabled[1],
+        ant3: antEnabled[2]
+      };
+
+      ws.send(JSON.stringify(payload));
+    }
+
     function connectWs(){
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${location.host}`;
@@ -739,6 +770,7 @@
 
     setLang("ja");
     el("btnINV").addEventListener("click", sendRfidRead);
+    el("btnApply").addEventListener("click", sendConfig);
     connectWs();
   </script>
 </body>
