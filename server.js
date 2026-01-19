@@ -267,6 +267,13 @@ wss.on("connection", (ws, req) => {
   // 謗･邯夂｢ｺ隱阪Γ繝・そ繝ｼ繧ｸ繧帝√ｋ
   setTimeout(() => {
     if (ws.readyState === 1) {
+      if (!ws.isESP32) {
+        ws.send(JSON.stringify({
+          type: "esp_status",
+          status: esp32Socket ? "online" : "offline",
+          timestamp: Date.now()
+        }));
+      }
       ws.send(JSON.stringify({
         type: "server_hello",
         timestamp: Date.now(),
@@ -286,7 +293,7 @@ const interval = setInterval(() => {
     ws.isAlive = false;
     ws.ping(() => {});
   });
-}, 30000);
+}, 60000);
 
 wss.on("close", () => {
   console.log("[WS] Server closing");
@@ -326,4 +333,5 @@ server.listen(PORT, () => {
   console.log(`[Server] Node version: ${process.version}`);
   console.log(`[Server] Platform: ${process.platform}`);
 });
+
 
