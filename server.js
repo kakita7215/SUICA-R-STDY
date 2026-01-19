@@ -162,6 +162,20 @@ wss.on("connection", (ws, req) => {
       return;
     }
 
+    if (data.type === "config") {
+      console.log(`[${new Date().toISOString()}] [CFG] Config request from browser (${clientId})`);
+
+      if (esp32Socket && esp32Socket.readyState === 1) {
+        esp32Socket.send(JSON.stringify(data));
+      } else {
+        ws.send(JSON.stringify({
+          type: "error",
+          message: "ESP32 not connected"
+        }));
+      }
+      return;
+    }
+
 
     if (data.type === "tag_name_set") {
       const id = typeof data.id === "string" ? data.id.trim() : "";
