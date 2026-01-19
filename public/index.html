@@ -794,8 +794,7 @@
     el("btnINV").addEventListener("click", sendRfidRead);
     el("btnApply").addEventListener("click", sendConfig);
     el("btnCopyAll").addEventListener("click", applyBulkToAntFields);
-    repeatAll.addEventListener("input", applyBulkToAntFields);
-    windowAll.addEventListener("input", applyBulkToAntFields);
+    // Copy only when the button is pressed.
     connectWs();
   </script>
 </body>
