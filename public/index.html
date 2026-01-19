@@ -633,16 +633,27 @@
     ant2Toggle.addEventListener("click", () => setAntEnabled(1, !antEnabled[1]));
     ant3Toggle.addEventListener("click", () => setAntEnabled(2, !antEnabled[2]));
 
+    function normalizeNumberInput(value){
+      if (typeof value !== "string") return null;
+      const normalized = value.replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)).trim();
+      if (normalized === "") return null;
+      const num = Number(normalized);
+      if (!Number.isFinite(num)) return null;
+      return normalized;
+    }
+
     function applyBulkToAntFields(){
-      if (repeatAll.value !== "") {
-        repeat1.value = repeatAll.value;
-        repeat2.value = repeatAll.value;
-        repeat3.value = repeatAll.value;
+      const repeatValue = normalizeNumberInput(repeatAll.value);
+      const windowValue = normalizeNumberInput(windowAll.value);
+      if (repeatValue !== null) {
+        repeat1.value = repeatValue;
+        repeat2.value = repeatValue;
+        repeat3.value = repeatValue;
       }
-      if (windowAll.value !== "") {
-        windowMs1.value = windowAll.value;
-        windowMs2.value = windowAll.value;
-        windowMs3.value = windowAll.value;
+      if (windowValue !== null) {
+        windowMs1.value = windowValue;
+        windowMs2.value = windowValue;
+        windowMs3.value = windowValue;
       }
     }
 
