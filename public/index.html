@@ -1,498 +1,745 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SUICA PJ UHF Monitor</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SUICA R PJ Monitor</title>
   <style>
-    :root {
-      --bg: #f6f7fb;
-      --panel: #ffffff;
-      --border: #e3e5ea;
-      --text: #1b1f2a;
-      --muted: #6c7483;
-      --accent: #2f66ff;
-      --accent-2: #00b871;
-      --danger: #ff4d4f;
-      --shadow: 0 8px 24px rgba(19, 33, 68, 0.08);
-      --radius: 14px;
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    :root{
+      color-scheme: light;
+      --bg: #fafafa;
+      --text: #111;
+      --muted: #666;
+      --card-bg: #fff;
+      --surface: #f6f6f6;
+      --surface-2: #f7f7f7;
+      --border: #e6e6e6;
+      --border-strong: #d7d7d7;
+      --pill-bg: #f6f6f6;
+      --table-head: #fff;
+      --details-bg: #fafafa;
+      --input-bg: #fff;
     }
-
-    * {
-      box-sizing: border-box;
+    html[data-theme="dark"]{
+      color-scheme: dark;
+      --bg: #0f1115;
+      --text: #e9edf5;
+      --muted: #a1a6b3;
+      --card-bg: #171a21;
+      --surface: #202430;
+      --surface-2: #1f2430;
+      --border: #2a2f3a;
+      --border-strong: #303645;
+      --pill-bg: #202430;
+      --table-head: #1b1f29;
+      --details-bg: #151821;
+      --input-bg: #12151c;
     }
-
-    body {
-      margin: 0;
-      padding: 24px;
+    body{
+      margin:0;
       font-family: "Sora", "Noto Sans JP", "Noto Sans KR", sans-serif;
       background: var(--bg);
       color: var(--text);
+      overflow-x:hidden;
     }
 
-    .page {
-      max-width: 1200px;
+    .wrap{
+      width: min(1100px, 100%);
       margin: 0 auto;
-      display: grid;
-      gap: 18px;
+      padding: 16px;
     }
 
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 22px;
-      font-weight: 700;
-    }
-
-    .status-pill {
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: #ffe9e9;
-      color: #c62828;
-      border: 1px solid #ffc7c7;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .circle-btn {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      border: 1px solid var(--border);
-      background: #fff;
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-    }
-
-    .lang-btn {
-      padding: 6px 12px;
-      border-radius: 999px;
-      border: 1px solid #5a7bff;
-      background: #f1f5ff;
-      color: #2452ff;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .lang-btn.active {
-      background: #2452ff;
-      color: #fff;
-      border-color: #2452ff;
-    }
-
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-    }
-
-    .toolbar {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .toolbar button {
-      border: 1px solid var(--border);
-      background: #f8f9fb;
-      padding: 8px 16px;
-      border-radius: 10px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .toolbar .hint {
-      width: 100%;
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 6px;
-    }
-
-    .section-title {
-      font-weight: 700;
-      font-size: 16px;
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
       margin-bottom: 10px;
-    }
-
-    .controls-grid {
-      display: grid;
-      grid-template-columns: 1.2fr repeat(3, 1fr);
-      gap: 10px 12px;
-      align-items: center;
-    }
-
-    .controls-grid .label {
-      color: var(--text);
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .controls-grid .cell {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px;
-      text-align: center;
-      font-weight: 700;
-    }
-
-    .controls-grid .on {
-      background: #20a45a;
-      color: #fff;
-      border-color: #20a45a;
-    }
-
-    .controls-grid input {
-      width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-size: 13px;
-    }
-
-    .controls-footer {
-      display: grid;
-      grid-template-columns: 1fr 2fr 1fr;
-      gap: 10px;
-      align-items: center;
-      margin-top: 12px;
-    }
-
-    .controls-footer .apply {
-      background: #2f66ff;
-      border: 1px solid #2f66ff;
-      color: #fff;
-      padding: 10px 16px;
-      border-radius: 10px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .controls-footer .copy {
-      border: 1px solid var(--border);
-      background: #fff;
-      padding: 10px 16px;
-      border-radius: 10px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .note {
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .summary-chips {
-      display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 10px;
     }
 
-    .chip {
+    .title{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      font-weight:800;
+      font-size: 26px;
+      letter-spacing: .2px;
+    }
+
+    .badge{
+      font-weight:800;
+      font-size: 12px;
       padding: 6px 10px;
       border-radius: 999px;
-      border: 1px solid var(--border);
-      background: #fff;
-      font-size: 12px;
-      font-weight: 600;
+      border:1px solid transparent;
+      white-space: nowrap;
+    }
+    .badge.ok{ background:#eaf8ef; border-color:#a9e3bf; color:#106a2a; }
+    .badge.ng{ background:#fdecec; border-color:#f3b2b2; color:#8b1111; }
+
+    .lang{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .pillbtn{
+      border:1px solid var(--border-strong);
+      background: var(--card-bg);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .pillbtn.active{
+      border-color:#5b85ff;
+      background:#eef3ff;
+      color:#1e4ed8;
     }
 
-    .table {
-      width: 100%;
+    .card{
+      background: var(--card-bg);
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin: 10px 0;
+      box-shadow: 0 1px 0 rgba(0,0,0,.02);
+    }
+
+    .cmdrow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .btn{
+      border:1px solid var(--border-strong);
+      background: var(--surface);
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor:pointer;
+      font-weight:800;
+    }
+    .btn.primary{
+      background:#2f62e6;
+      border-color:#2f62e6;
+      color:#fff;
+    }
+
+    .hint{
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px;
+      line-height: 1.35;
+    }
+
+    .controlHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .controlHeader h3{
+      margin:0;
+      font-size: 16px;
+    }
+
+    .ctl-grid{
+      display:grid;
+      grid-template-columns: 220px repeat(3, minmax(0, 1fr));
+      gap: 10px 12px;
+      align-items:center;
+      width:100%;
+      min-width:0;
+    }
+
+    .rowlabel{
+      font-weight:800;
+      min-width: 0;
+      word-break: keep-all;
+    }
+
+    .anthead{
+      text-align:center;
+      font-weight:900;
+      border:1px solid var(--border);
+      background: var(--surface-2);
+      border-radius: 12px;
+      padding: 8px 10px;
+      width:100%;
+      min-width:0;
+    }
+    .antToggle{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+      padding: 6px 8px;
+      border-radius: 10px;
+      border:1px solid var(--border-strong);
+      background: var(--surface);
+      font-weight:800;
+      cursor:pointer;
+    }
+    .antToggle.on{
+      background:#1f9d55;
+      border-color:#1f9d55;
+      color:#fff;
+    }
+    .antToggle.off{
+      background:#fbeaea;
+      border-color:#efb1b1;
+      color:#8b1111;
+    }
+
+    input[type="number"], input[type="text"]{
+      width:100%;
+      min-width:0;
+      padding: 10px 12px;
+      border:1px solid var(--border-strong);
+      border-radius: 12px;
+      font-weight:700;
+      background: var(--input-bg);
+      outline:none;
+      color: var(--text);
+    }
+
+    .total-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr auto auto;
+      gap: 10px 12px;
+      align-items:center;
+      margin-top: 12px;
+      width:100%;
+      min-width:0;
+    }
+    .total-grid .rowlabel{ font-weight:800; }
+    .total-grid .btn{ white-space:nowrap; }
+
+    .pills{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .pill{
+      background: var(--pill-bg);
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding: 6px 10px;
+      font-weight:800;
+      font-size: 12px;
+      white-space:nowrap;
+    }
+
+    table{
+      width:100%;
       border-collapse: collapse;
       font-size: 13px;
     }
-
-    .table th,
-    .table td {
-      text-align: left;
+    th, td{
       padding: 10px 8px;
-      border-bottom: 1px solid var(--border);
+      border-top:1px solid var(--border);
+      vertical-align: middle;
     }
-
-    .table th {
+    th{
       color: var(--muted);
-      font-weight: 700;
+      font-weight:900;
+      text-align:left;
+      background: var(--table-head);
     }
+    .statusPill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight:900;
+      border:1px solid transparent;
+      white-space:nowrap;
+      min-width: 96px;
+      text-align:center;
+    }
+    .statusPill.ok{ background:#eaf8ef; border-color:#a9e3bf; color:#106a2a; }
+    .statusPill.ng{ background:#fdecec; border-color:#f3b2b2; color:#8b1111; }
+    .statusPill.nc{ background:#f4f4f4; border-color:#e0e0e0; color:#666; }
 
-    .toggle-row {
+    details{
       margin-top: 10px;
+      border:1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: var(--details-bg);
+    }
+    pre{
+      margin: 10px 0 0 0;
       padding: 10px;
+      background:#0b1020;
+      color:#d7e3ff;
       border-radius: 10px;
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 600;
-    }
-
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .updated {
+      overflow:auto;
       font-size: 12px;
-      color: var(--muted);
     }
 
-    @media (max-width: 960px) {
-      .controls-grid {
-        grid-template-columns: 1fr;
-      }
+    .tagTable td, .tagTable th{ border-top:1px solid var(--border); }
 
-      .controls-footer {
-        grid-template-columns: 1fr;
-      }
+    .theme{
+      display:flex;
+      gap:6px;
+      align-items:center;
+    }
+    .iconbtn{
+      border:1px solid var(--border-strong);
+      background: var(--card-bg);
+      border-radius: 999px;
+      width: 34px;
+      height: 34px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      font-size: 16px;
+    }
+    .iconbtn.active{
+      border-color:#5b85ff;
+      background:#eef3ff;
+      color:#1e4ed8;
+    }
+
+    @media (max-width: 760px){
+      .wrap{ padding: 12px; }
+      .title{ font-size: 22px; }
+      .ctl-grid{ grid-template-columns: 170px repeat(3, minmax(0,1fr)); }
+      .total-grid{ grid-template-columns: 1fr 1fr; }
+      .total-grid .btn, .total-grid .btn.primary{ width:100%; }
+    }
+
+    @media (max-width: 520px){
+      .ctl-grid{ grid-template-columns: 150px repeat(3, minmax(0,1fr)); gap: 8px 8px; }
+      input[type="number"], input[type="text"]{ padding: 9px 10px; border-radius: 11px; }
+      .anthead{ padding: 7px 8px; border-radius: 11px; font-size: 12px; }
+      .rowlabel{ font-size: 13px; }
+      .btn{ padding: 8px 10px; }
+      .total-grid{ grid-template-columns: 1fr; }
     }
   </style>
 </head>
+
 <body>
-  <div class="page" data-lang="ja">
+  <div class="wrap">
     <div class="topbar">
       <div class="title">
-        <span data-i18n="title">SUICA PJ UHF Monitor</span>
-        <span class="status-pill" id="status-pill" data-i18n="status.disconnected">DISCONNECTED</span>
+        <span id="tTitle">SUICA R PJ Monitor</span>
+        <span id="connBadge" class="badge ng">DISCONNECTED</span>
       </div>
-      <div class="top-actions">
-        <button class="circle-btn" aria-label="sun">☀️</button>
-        <button class="circle-btn" aria-label="moon">🌙</button>
-        <button class="lang-btn" id="lang-ko">한국어</button>
-        <button class="lang-btn active" id="lang-ja">日本語</button>
+      <div class="lang">
+        <div class="theme" aria-label="Theme">
+          <button id="btnLight" class="iconbtn" title="Light">☀️</button>
+          <button id="btnDark" class="iconbtn" title="Dark">🌙</button>
+        </div>
+        <button id="btnKo" class="pillbtn">한국어</button>
+        <button id="btnJa" class="pillbtn active">日本語</button>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="toolbar">
-        <button data-i18n="btn.fw">FW</button>
-        <button data-i18n="btn.temp">TEMP</button>
-        <button data-i18n="btn.inventory">INVENTORY</button>
-        <button data-i18n="btn.return">RETURN LOSS</button>
-        <button data-i18n="btn.clear">CLEAR</button>
-        <div class="hint" data-i18n="hint.action">
-          ESP32がRailwayの命令を取得して実行します。（INV/RLはアンテナ1〜3のみ、4は未接続）
+    <div class="card">
+      <div class="cmdrow">
+        <button class="btn" id="btnFW">FW</button>
+        <button class="btn" id="btnTEMP">TEMP</button>
+        <button class="btn" id="btnINV">INVENTORY</button>
+        <button class="btn" id="btnRL">RETURN LOSS</button>
+        <button class="btn" id="btnCLEAR">CLEAR</button>
+      </div>
+      <div class="hint" id="topHint">
+        ESP32がRFIDリーダーから情報を取得して実行します。（INV/RLはアンテナ1〜3のみ、4は未接続）
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="controlHeader">
+        <h3 id="ctlTitle">コントロール</h3>
+        <div class="hint" id="ctlHint" style="margin:0">
+          Power/Repeat/Windowはインベントリ動作に即時反映されます。
         </div>
       </div>
-    </div>
 
-    <div class="panel">
-      <div class="section-header">
-        <div class="section-title" data-i18n="section.control">コントロール</div>
-        <div class="updated" data-i18n="note.apply">Power/Repeat/Windowはインベントリ動作に即時反映されます。</div>
-      </div>
-      <div class="controls-grid" style="margin-top: 12px;">
+      <div class="ctl-grid">
         <div></div>
-        <div class="cell" data-i18n="ant.1">ANT-1</div>
-        <div class="cell" data-i18n="ant.2">ANT-2</div>
-        <div class="cell" data-i18n="ant.3">ANT-3</div>
+        <div class="anthead">ANT-1</div>
+        <div class="anthead">ANT-2</div>
+        <div class="anthead">ANT-3</div>
 
-        <div class="label" data-i18n="label.enable">Enable</div>
-        <div class="cell on" data-i18n="state.on">ON</div>
-        <div class="cell on" data-i18n="state.on">ON</div>
-        <div class="cell on" data-i18n="state.on">ON</div>
+        <div class="rowlabel" id="lblEnable">Enable</div>
+        <button id="ant1Toggle" class="antToggle on">ON</button>
+        <button id="ant2Toggle" class="antToggle off">OFF</button>
+        <button id="ant3Toggle" class="antToggle off">OFF</button>
 
-        <div class="label" data-i18n="label.power">Power(dBm) 0〜33</div>
-        <input type="text" />
-        <input type="text" />
-        <input type="text" />
+        <div class="rowlabel" id="lblPower">Power(dBm) 0〜33</div>
+        <input id="power1" type="number" min="0" max="33" />
+        <input id="power2" type="number" min="0" max="33" />
+        <input id="power3" type="number" min="0" max="33" />
 
-        <div class="label" data-i18n="label.repeat">Repeat（ANT別）</div>
-        <input type="text" />
-        <input type="text" />
-        <input type="text" />
+        <div class="rowlabel" id="lblRepeatPer">Repeat（ANT別）</div>
+        <input id="repeat1" type="number" min="1" max="255" />
+        <input id="repeat2" type="number" min="1" max="255" />
+        <input id="repeat3" type="number" min="1" max="255" />
 
-        <div class="label" data-i18n="label.window">Window(ms)（ANT別）</div>
-        <input type="text" />
-        <input type="text" />
-        <input type="text" />
+        <div class="rowlabel" id="lblWindowPer">Window(ms)（ANT別）</div>
+        <input id="windowMs1" type="number" min="50" max="5000" />
+        <input id="windowMs2" type="number" min="50" max="5000" />
+        <input id="windowMs3" type="number" min="50" max="5000" />
       </div>
 
-      <div class="controls-footer">
-        <button class="copy" data-i18n="btn.copy">全体値をANT別にコピー</button>
-        <button class="apply" data-i18n="btn.apply">Apply</button>
-        <div class="label" style="text-align:right;" data-i18n="label.windowAll">Window(ms)（全体）</div>
+      <div class="total-grid">
+        <div class="rowlabel" id="lblRepeatAll">Repeat（全体）</div>
+        <input id="repeatAll" type="number" min="1" max="255" />
+
+        <div class="rowlabel" id="lblWindowAll">Window(ms)（全体）</div>
+        <input id="windowAll" type="number" min="50" max="5000" />
+
+        <button class="btn" id="btnCopyAll">全体値をANT別にコピー</button>
+        <button class="btn primary" id="btnApply">Apply</button>
       </div>
 
-      <div class="note" data-i18n="note.return">
+      <div class="hint" id="rlInfo" style="margin-top:10px">
         ※ Return Lossのvalueはアンテナ整合の指標で、RF出力(dBm)とは別の値です。OFFはPower=0で動作します。
       </div>
     </div>
 
-    <div class="panel">
-      <div class="section-header">
-        <div class="section-title" data-i18n="section.summary">サマリー</div>
-        <div class="updated" data-i18n="updated">updatedAt: -</div>
-      </div>
-      <div class="summary-chips">
-        <div class="chip">FW: -</div>
-        <div class="chip">TEMP: -</div>
-        <div class="chip">Power: -</div>
-        <div class="chip">Repeat: -</div>
-        <div class="chip">Window: -</div>
-        <div class="chip">Tags: -</div>
-        <div class="chip">readMs: -</div>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
+        <h3 id="sumTitle" style="margin:0">サマリー</h3>
+        <div class="hint" id="updatedAtText" style="margin:0">updatedAt: -</div>
       </div>
 
-      <div class="section-title" style="margin-top: 16px;" data-i18n="section.returnloss">Return Loss（アンテナ状態）</div>
-      <div class="note" data-i18n="note.returnShort">Return Lossはアンテナ整合の指標です。（RF出力とは別）</div>
-      <table class="table" style="margin-top: 8px;">
+      <div class="pills" style="margin-top:10px">
+        <div class="pill" id="pillFW">FW: -</div>
+        <div class="pill" id="pillTEMP">TEMP: -</div>
+        <div class="pill" id="pillPower">Power: -</div>
+        <div class="pill" id="pillRepeat">Repeat: -</div>
+        <div class="pill" id="pillWindow">Window: -</div>
+        <div class="pill" id="pillTags">Tags: -</div>
+        <div class="pill" id="pillReadMs">readMs: -</div>
+      </div>
+
+      <h4 id="rlTitle" style="margin:14px 0 6px 0">Return Loss（アンテナ状態）</h4>
+      <div class="hint" id="rlDesc" style="margin:0 0 8px 0">
+        Return Lossはアンテナ整合の指標です。（RF出力とは別）
+      </div>
+
+      <table>
         <thead>
           <tr>
-            <th>ANT</th>
-            <th data-i18n="table.status">状態</th>
-            <th>Value</th>
+            <th style="width:120px">ANT</th>
+            <th style="width:140px; text-align:center;">状態</th>
+            <th style="width:120px">Value</th>
             <th>RAW</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td>ANT1</td>
-            <td>-</td>
-            <td>-</td>
-            <td>-</td>
-          </tr>
-        </tbody>
+        <tbody id="rlBody"></tbody>
       </table>
 
-      <div class="toggle-row" data-i18n="toggle.raw">▶ ▶ Raw Data (Debug JSON) 表示/非表示</div>
+      <details>
+        <summary id="rawToggle">▶ Raw Data (Debug JSON) 表示/非表示</summary>
+        <pre id="rawPre">{}</pre>
+      </details>
     </div>
 
-    <div class="panel">
-      <div class="section-title" data-i18n="section.tags">タグ</div>
-      <table class="table">
+    <div class="card">
+      <h3 id="tagTitle" style="margin:0 0 10px 0">タグ</h3>
+      <table class="tagTable">
         <thead>
           <tr>
             <th>EPC</th>
-            <th>ANT1</th>
-            <th>ANT2</th>
-            <th>ANT3</th>
-            <th>BEST</th>
-            <th>CONF</th>
+            <th style="width:90px">ANT1</th>
+            <th style="width:90px">ANT2</th>
+            <th style="width:90px">ANT3</th>
+            <th style="width:90px">BEST</th>
+            <th style="width:90px">CONF</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td colspan="6">-</td>
-          </tr>
-        </tbody>
+        <tbody id="tagBody"></tbody>
       </table>
     </div>
   </div>
 
   <script>
-    const translations = {
-      ja: {
-        "title": "SUICA PJ UHF Monitor",
-        "status.disconnected": "DISCONNECTED",
-        "btn.fw": "FW",
-        "btn.temp": "TEMP",
-        "btn.inventory": "INVENTORY",
-        "btn.return": "RETURN LOSS",
-        "btn.clear": "CLEAR",
-        "hint.action": "ESP32がRailwayの命令を取得して実行します。（INV/RLはアンテナ1〜3のみ、4は未接続）",
-        "section.control": "コントロール",
-        "note.apply": "Power/Repeat/Windowはインベントリ動作に即時反映されます。",
-        "ant.1": "ANT-1",
-        "ant.2": "ANT-2",
-        "ant.3": "ANT-3",
-        "label.enable": "Enable",
-        "state.on": "ON",
-        "label.power": "Power(dBm) 0〜33",
-        "label.repeat": "Repeat（ANT別）",
-        "label.window": "Window(ms)（ANT別）",
-        "btn.copy": "全体値をANT別にコピー",
-        "btn.apply": "Apply",
-        "label.windowAll": "Window(ms)（全体）",
-        "note.return": "※ Return Lossのvalueはアンテナ整合の指標で、RF出力(dBm)とは別の値です。OFFはPower=0で動作します。",
-        "section.summary": "サマリー",
-        "updated": "updatedAt: -",
-        "section.returnloss": "Return Loss（アンテナ状態）",
-        "note.returnShort": "Return Lossはアンテナ整合の指標です。（RF出力とは別）",
-        "table.status": "状態",
-        "toggle.raw": "▶ ▶ Raw Data (Debug JSON) 表示/非表示",
-        "section.tags": "タグ"
-      },
+    const I18N = {
       ko: {
-        "title": "SUICA PJ UHF Monitor",
-        "status.disconnected": "DISCONNECTED",
-        "btn.fw": "FW",
-        "btn.temp": "TEMP",
-        "btn.inventory": "INVENTORY",
-        "btn.return": "RETURN LOSS",
-        "btn.clear": "CLEAR",
-        "hint.action": "ESP32가 Railway의 명령을 받아 실행합니다. (INV/RL은 안테나 1~3만, 4는 미연결)",
-        "section.control": "컨트롤",
-        "note.apply": "Power/Repeat/Window는 인벤토리 동작에 즉시 반영됩니다.",
-        "ant.1": "ANT-1",
-        "ant.2": "ANT-2",
-        "ant.3": "ANT-3",
-        "label.enable": "Enable",
-        "state.on": "ON",
-        "label.power": "Power(dBm) 0~33",
-        "label.repeat": "Repeat(ANT별)",
-        "label.window": "Window(ms)(ANT별)",
-        "btn.copy": "전체 값을 ANT별로 복사",
-        "btn.apply": "Apply",
-        "label.windowAll": "Window(ms)(전체)",
-        "note.return": "※ Return Loss 값은 안테나 정합 지표이며, RF 출력(dBm)과는 별도 값입니다. OFF는 Power=0으로 동작합니다.",
-        "section.summary": "요약",
-        "updated": "updatedAt: -",
-        "section.returnloss": "Return Loss(안테나 상태)",
-        "note.returnShort": "Return Loss는 안테나 정합 지표입니다. (RF 출력과 별도)",
-        "table.status": "상태",
-        "toggle.raw": "▶ ▶ Raw Data (Debug JSON) 표시/숨김",
-        "section.tags": "태그"
+        title: "SUICA R PJ Monitor",
+        topHint: "ESP32가 RFID 리더에서 정보를 받아 실행합니다. (INV/RL은 안테나 1~3만, 4는 미연결)",
+        controlTitle: "컨트롤",
+        controlHint: "Power/Repeat/Window는 인벤토리 동작에 즉시 반영됩니다.",
+        labelPower: "Power(dBm) 0~33",
+        labelEnable: "Enable",
+        btnOn: "ON",
+        btnOff: "OFF",
+        antOffHint: "OFF는 Power=0으로 동작합니다.",
+        labelRepeatAll: "Repeat(전체)",
+        labelWindowAll: "Window(ms)(전체)",
+        labelRepeatPer: "Repeat(ANT별)",
+        labelWindowPer: "Window(ms)(ANT별)",
+        btnCopyAll: "전체 값을 ANT별로 복사",
+        btnApply: "Apply",
+        rlInfo: "※ Return Loss 값은 안테나 정합 지표이며, RF 출력(dBm)과는 별도 값입니다.",
+        summaryTitle: "요약",
+        rlTitle: "Return Loss(안테나 상태)",
+        rlDesc: "Return Loss는 안테나 정합 지표입니다. (RF 출력과 별도)",
+        rawToggle: "▶ Raw Data (Debug JSON) 표시/숨김",
+        tagTitle: "태그",
+        connected: "CONNECTED",
+        disconnected: "DISCONNECTED",
+        statusOK: "OK",
+        statusNG: "NG",
+        statusNC: "Not Connected"
+      },
+      ja: {
+        title: "SUICA R PJ Monitor",
+        topHint: "ESP32がRFIDリーダーから情報を取得して実行します。（INV/RLはアンテナ1〜3のみ、4は未接続）",
+        controlTitle: "コントロール",
+        controlHint: "Power/Repeat/Windowはインベントリ動作に即時反映されます。",
+        labelPower: "Power(dBm) 0〜33",
+        labelEnable: "Enable",
+        btnOn: "ON",
+        btnOff: "OFF",
+        antOffHint: "OFFはPower=0で動作します。",
+        labelRepeatAll: "Repeat（全体）",
+        labelWindowAll: "Window(ms)（全体）",
+        labelRepeatPer: "Repeat（ANT別）",
+        labelWindowPer: "Window(ms)（ANT別）",
+        btnCopyAll: "全体値をANT別にコピー",
+        btnApply: "Apply",
+        rlInfo: "※ Return Lossのvalueはアンテナ整合の指標で、RF出力(dBm)とは別の値です。",
+        summaryTitle: "サマリー",
+        rlTitle: "Return Loss（アンテナ状態）",
+        rlDesc: "Return Lossはアンテナ整合の指標です。（RF出力とは別）",
+        rawToggle: "▶ Raw Data (Debug JSON) 表示/非表示",
+        tagTitle: "タグ",
+        connected: "CONNECTED",
+        disconnected: "DISCONNECTED",
+        statusOK: "OK",
+        statusNG: "NG",
+        statusNC: "Not Connected"
       }
     };
 
-    const root = document.querySelector(".page");
-    const btnJa = document.getElementById("lang-ja");
-    const btnKo = document.getElementById("lang-ko");
+    let lang = "ja";
+    let theme = localStorage.getItem("theme") || "light";
 
-    function applyLang(lang) {
-      root.setAttribute("data-lang", lang);
-      document.querySelectorAll("[data-i18n]").forEach((el) => {
-        const key = el.getAttribute("data-i18n");
-        const value = translations[lang][key];
-        if (value) {
-          el.textContent = value;
-        }
-      });
+    const el = (id) => document.getElementById(id);
 
-      if (lang === "ja") {
-        btnJa.classList.add("active");
-        btnKo.classList.remove("active");
+    function applyTheme(next){
+      theme = next;
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("theme", theme);
+      const lightBtn = el("btnLight");
+      const darkBtn = el("btnDark");
+      lightBtn.classList.toggle("active", theme === "light");
+      darkBtn.classList.toggle("active", theme === "dark");
+    }
+
+    function setLang(next){
+      lang = next;
+      const t = I18N[lang];
+
+      el("tTitle").textContent = t.title;
+      el("topHint").textContent = t.topHint;
+      el("ctlTitle").textContent = t.controlTitle;
+      el("ctlHint").textContent = t.controlHint;
+      el("lblPower").textContent = t.labelPower;
+      el("lblEnable").textContent = t.labelEnable;
+      el("lblRepeatAll").textContent = t.labelRepeatAll;
+      el("lblWindowAll").textContent = t.labelWindowAll;
+      el("lblRepeatPer").textContent = t.labelRepeatPer;
+      el("lblWindowPer").textContent = t.labelWindowPer;
+      el("btnCopyAll").textContent = t.btnCopyAll;
+      el("btnApply").textContent = t.btnApply;
+      el("rlInfo").textContent = t.rlInfo + " " + t.antOffHint;
+      el("sumTitle").textContent = t.summaryTitle;
+      el("rlTitle").textContent = t.rlTitle;
+      el("rlDesc").textContent = t.rlDesc;
+      el("rawToggle").textContent = t.rawToggle;
+      el("tagTitle").textContent = t.tagTitle;
+
+      el("btnKo").classList.toggle("active", lang === "ko");
+      el("btnJa").classList.toggle("active", lang === "ja");
+
+      updateAntToggleUI();
+      updateConnectionBadge(lastEspStatus);
+    }
+
+    el("btnKo").addEventListener("click", () => setLang("ko"));
+    el("btnJa").addEventListener("click", () => setLang("ja"));
+    el("btnLight").addEventListener("click", () => applyTheme("light"));
+    el("btnDark").addEventListener("click", () => applyTheme("dark"));
+
+    applyTheme(theme);
+
+    const power1 = el("power1"), power2 = el("power2"), power3 = el("power3");
+    const repeat1 = el("repeat1"), repeat2 = el("repeat2"), repeat3 = el("repeat3");
+    const windowMs1 = el("windowMs1"), windowMs2 = el("windowMs2"), windowMs3 = el("windowMs3");
+    const repeatAll = el("repeatAll"), windowAll = el("windowAll");
+    const ant1Toggle = el("ant1Toggle"), ant2Toggle = el("ant2Toggle"), ant3Toggle = el("ant3Toggle");
+
+    const antEnabled = [true, false, false];
+    const powerCache = [null, null, null];
+
+    function toggleInputDisabled(idx, disabled){
+      const r = idx === 0 ? repeat1 : (idx === 1 ? repeat2 : repeat3);
+      const w = idx === 0 ? windowMs1 : (idx === 1 ? windowMs2 : windowMs3);
+      if (idx === 0) power1.disabled = disabled;
+      if (idx === 1) power2.disabled = disabled;
+      if (idx === 2) power3.disabled = disabled;
+      r.disabled = disabled;
+      w.disabled = disabled;
+    }
+
+    function setAntEnabled(idx, enabled){
+      antEnabled[idx] = enabled;
+      if (enabled){
+        const cached = powerCache[idx];
+        const fallback = 8;
+        const restored = (cached !== null && Number.isFinite(cached)) ? cached : fallback;
+        if (idx === 0) power1.value = restored;
+        if (idx === 1) power2.value = restored;
+        if (idx === 2) power3.value = restored;
+        toggleInputDisabled(idx, false);
       } else {
-        btnKo.classList.add("active");
-        btnJa.classList.remove("active");
+        const current = idx === 0 ? Number(power1.value) : (idx === 1 ? Number(power2.value) : Number(power3.value));
+        if (Number.isFinite(current) && current > 0) powerCache[idx] = current;
+        if (idx === 0) power1.value = 0;
+        if (idx === 1) power2.value = 0;
+        if (idx === 2) power3.value = 0;
+        toggleInputDisabled(idx, true);
+      }
+      updateAntToggleUI();
+    }
+
+    function updateAntToggleUI(){
+      const t = I18N[lang];
+      const buttons = [ant1Toggle, ant2Toggle, ant3Toggle];
+      buttons.forEach((btn, idx)=>{
+        btn.classList.toggle("on", antEnabled[idx]);
+        btn.classList.toggle("off", !antEnabled[idx]);
+        btn.textContent = antEnabled[idx] ? t.btnOn : t.btnOff;
+      });
+    }
+
+    ant1Toggle.addEventListener("click", () => setAntEnabled(0, !antEnabled[0]));
+    ant2Toggle.addEventListener("click", () => setAntEnabled(1, !antEnabled[1]));
+    ant3Toggle.addEventListener("click", () => setAntEnabled(2, !antEnabled[2]));
+
+    setAntEnabled(0, true);
+    setAntEnabled(1, false);
+    setAntEnabled(2, false);
+
+    function updateConnectionBadge(status){
+      const t = I18N[lang];
+      const b = el("connBadge");
+      if (status === "online"){
+        b.classList.remove("ng");
+        b.classList.add("ok");
+        b.textContent = t.connected;
+      } else {
+        b.classList.remove("ok");
+        b.classList.add("ng");
+        b.textContent = t.disconnected;
       }
     }
 
-    btnJa.addEventListener("click", () => applyLang("ja"));
-    btnKo.addEventListener("click", () => applyLang("ko"));
+    function renderSummary(data){
+      el("pillFW").textContent = "FW: " + (data.fwText ?? "-");
+      el("pillTEMP").textContent = "TEMP: " + (data.tempText ?? "-");
+      el("pillPower").textContent = "Power: " + (data.power1 ?? "-") + " dBm";
+      el("pillRepeat").textContent = "Repeat: " + (data.repeat1 ?? "-");
+      el("pillWindow").textContent = "Window: " + (data.windowMs1 ?? "-") + " ms";
+      const tagCount = data.count ?? (Array.isArray(data.tags) ? data.tags.length : 0);
+      el("pillTags").textContent = "Tags: " + tagCount;
+      el("pillReadMs").textContent = "readMs: " + (data.readMs ?? "-");
+
+      const dt = new Date();
+      el("updatedAtText").textContent = "updatedAt: " + dt.toLocaleString();
+      el("rawPre").textContent = JSON.stringify(data, null, 2);
+    }
+
+    function renderTags(data){
+      const tags = Array.isArray(data.tags) ? data.tags : [];
+      if (tags.length === 0){
+        el("tagBody").innerHTML = "<tr><td colspan=\"6\">-</td></tr>";
+        return;
+      }
+      const rows = tags.map((tag) => {
+        const epc = tag.id ?? tag.epc ?? "";
+        const rssi = Number(tag.rssi ?? 0);
+        const show = (v) => (Number.isFinite(v) && v !== 0 ? v : "-");
+        return `
+          <tr>
+            <td>${epc}</td>
+            <td>${show(rssi)}</td>
+            <td>-</td>
+            <td>-</td>
+            <td>${show(rssi)}</td>
+            <td>-</td>
+          </tr>
+        `;
+      }).join("");
+      el("tagBody").innerHTML = rows;
+    }
+
+    let lastEspStatus = "offline";
+    let ws = null;
+
+    function handleWsMessage(event){
+      let data;
+      try {
+        data = JSON.parse(event.data);
+      } catch (e) {
+        return;
+      }
+
+      if (data.type === "esp_status"){
+        lastEspStatus = data.status || "offline";
+        updateConnectionBadge(lastEspStatus);
+        return;
+      }
+
+      if (data.type === "rfid_result"){
+        renderSummary(data);
+        renderTags(data);
+      }
+    }
+
+    function sendRfidRead(){
+      if (ws && ws.readyState === WebSocket.OPEN){
+        ws.send(JSON.stringify({ type: "rfid_read" }));
+      }
+    }
+
+    function connectWs(){
+      const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${protocol}//${location.host}`;
+      ws = new WebSocket(wsUrl);
+
+      ws.addEventListener("open", () => {
+        updateConnectionBadge(lastEspStatus);
+      });
+
+      ws.addEventListener("close", () => {
+        lastEspStatus = "offline";
+        updateConnectionBadge(lastEspStatus);
+        setTimeout(connectWs, 3000);
+      });
+
+      ws.addEventListener("message", handleWsMessage);
+    }
+
+    setLang("ja");
+    el("btnINV").addEventListener("click", sendRfidRead);
+    connectWs();
   </script>
 </body>
 </html>
