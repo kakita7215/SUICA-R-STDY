@@ -10,23 +10,19 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// 静的ファイル配信 (publicディレクトリ)
 app.use(express.static(path.join(__dirname, "public")));
 
-// ルートアクセス時にpublic/index.htmlを返す
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 const server = http.createServer(app);
 
-// WebSocket設定
-const wss = new WebSocketServer({ 
+const wss = new WebSocketServer({
   server,
   perMessageDeflate: false,
   clientTracking: true,
   maxPayload: 1024 * 1024,
-  // タイムアウトを長めに設定
   handshakeTimeout: 30000
 });
 
@@ -66,7 +62,6 @@ async function saveTagNames() {
 
 loadTagNames();
 
-// ヘルスチェック用
 app.get("/health", (req, res) => {
   const status = {
     status: "running",
@@ -148,7 +143,6 @@ wss.on("connection", (ws, req) => {
       return;
     }
 
-    // ブラウザから読み取りリクエスト
     if (data.type === "rfid_read") {
       console.log(`[${new Date().toISOString()}] [RFID] Read request from browser (${clientId})`);
       
@@ -169,7 +163,6 @@ wss.on("connection", (ws, req) => {
     }
 
 
-    // ブラウザからタグ名の登録
     if (data.type === "tag_name_set") {
       const id = typeof data.id === "string" ? data.id.trim() : "";
       const name = typeof data.name === "string" ? data.name.trim() : "";
@@ -239,7 +232,6 @@ wss.on("connection", (ws, req) => {
       esp32Socket = null;
       console.log("[ESP32] Unregistered");
       
-      // 全クライアントにESP32切断を通知
       let notified = 0;
       wss.clients.forEach((client) => {
         if (client.readyState === 1 && !client.isESP32) {
@@ -261,7 +253,6 @@ wss.on("connection", (ws, req) => {
     console.error(`[${new Date().toISOString()}] [WS] Error from ${clientId}:`, err?.message || err);
   });
   
-  // 接続確認メッセージを送る
   setTimeout(() => {
     if (ws.readyState === 1) {
       if (!ws.isESP32) {
@@ -280,7 +271,6 @@ wss.on("connection", (ws, req) => {
   }, 100);
 });
 
-// Ping/Pongによる接続維持（48秒ごと）
 const interval = setInterval(() => {
   wss.clients.forEach((ws) => {
     if (ws.isAlive === false) {
@@ -297,7 +287,6 @@ wss.on("close", () => {
   clearInterval(interval);
 });
 
-// グレースフルシャットダウン
 function shutdown() {
   console.log(`[${new Date().toISOString()}] [Server] Shutting down gracefully...`);
   clearInterval(interval);
