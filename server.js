@@ -1,4 +1,4 @@
-﻿import express from "express";
+import express from "express";
 import http from "http";
 import path from "path";
 import fs from "fs/promises";
@@ -10,23 +10,23 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// 髱咏噪繝輔ぃ繧､繝ｫ驟堺ｿ｡ (public繝・ぅ繝ｬ繧ｯ繝医Μ)
+// 静的ファイル配信 (publicディレクトリ)
 app.use(express.static(path.join(__dirname, "public")));
 
-// 繝ｫ繝ｼ繝医い繧ｯ繧ｻ繧ｹ譎ゅ↓public/index.html繧呈・遉ｺ逧・↓霑斐☆
+// ルートアクセス時にpublic/index.htmlを返す
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 const server = http.createServer(app);
 
-// WebSocket險ｭ螳壹ｒ隱ｿ謨ｴ
+// WebSocket設定
 const wss = new WebSocketServer({ 
   server,
   perMessageDeflate: false,
   clientTracking: true,
   maxPayload: 1024 * 1024,
-  // 繧ｿ繧､繝繧｢繧ｦ繝医ｒ髟ｷ繧√↓險ｭ螳・
+  // タイムアウトを長めに設定
   handshakeTimeout: 30000
 });
 
@@ -66,7 +66,7 @@ async function saveTagNames() {
 
 loadTagNames();
 
-// 繝倥Ν繧ｹ繝√ぉ繝・け逕ｨ
+// ヘルスチェック用
 app.get("/health", (req, res) => {
   const status = {
     status: "running",
@@ -111,7 +111,7 @@ wss.on("connection", (ws, req) => {
       return; 
     }
 
-    // ESP32縺梧磁邯壹＠縺溘％縺ｨ繧堤匳骭ｲ
+    // ESP32が接続したことを登録
     if (data.type === "esp_online") {
       const oldESP32 = esp32Socket;
       esp32Socket = ws;
@@ -126,7 +126,6 @@ wss.on("connection", (ws, req) => {
         oldESP32.close();
       }
       
-      // 蜈ｨ繝悶Λ繧ｦ繧ｶ繧ｯ繝ｩ繧､繧｢繝ｳ繝医↓ESP32謗･邯壹ｒ騾夂衍
       let notified = 0;
       wss.clients.forEach((client) => {
         if (client !== ws && client.readyState === 1 && !client.isESP32) {
@@ -140,7 +139,6 @@ wss.on("connection", (ws, req) => {
       });
       console.log(`[ESP32] Notified ${notified} browser clients`);
       
-      // ESP32縺ｫ遒ｺ隱榊ｿ懃ｭ斐ｒ騾√ｋ
       ws.send(JSON.stringify({
         type: "esp_registered",
         status: "ok",
@@ -150,7 +148,7 @@ wss.on("connection", (ws, req) => {
       return;
     }
 
-    // 繝悶Λ繧ｦ繧ｶ縺九ｉ隱ｭ縺ｿ蜿悶ｊ繝ｪ繧ｯ繧ｨ繧ｹ繝・
+    // ブラウザから読み取りリクエスト
     if (data.type === "rfid_read") {
       console.log(`[${new Date().toISOString()}] [RFID] Read request from browser (${clientId})`);
       
@@ -170,7 +168,6 @@ wss.on("connection", (ws, req) => {
       return;
     }
 
-    // ESP32縺九ｉ縺ｮ隱ｭ縺ｿ蜿悶ｊ邨先棡
 
     // ブラウザからタグ名の登録
     if (data.type === "tag_name_set") {
@@ -203,17 +200,17 @@ wss.on("connection", (ws, req) => {
 
       return;
     }
+    // ESP32からの読み取り結果
     if (data.type === "rfid_result") {
       console.log(`[${new Date().toISOString()}] [RFID] Result from ESP32: ${data.count} tags`);
       
-      // 繧ｿ繧ｰ隧ｳ邏ｰ繧偵Ο繧ｰ蜃ｺ蜉・
+      // タグ詳細をログ出力
       if (data.tags && data.tags.length > 0) {
         data.tags.forEach((tag, idx) => {
           console.log(`[RFID] Tag ${idx + 1}: ID=${tag.id}, RSSI=${tag.rssi}dBm`);
         });
       }
       
-      // 蜈ｨ繝悶Λ繧ｦ繧ｶ繧ｯ繝ｩ繧､繧｢繝ｳ繝医↓驟堺ｿ｡
 
       if (Array.isArray(data.tags)) {
         data.tags = data.tags.map((tag) => {
@@ -242,7 +239,7 @@ wss.on("connection", (ws, req) => {
       esp32Socket = null;
       console.log("[ESP32] Unregistered");
       
-      // 蜈ｨ繧ｯ繝ｩ繧､繧｢繝ｳ繝医↓ESP32蛻・妙繧帝夂衍
+      // 全クライアントにESP32切断を通知
       let notified = 0;
       wss.clients.forEach((client) => {
         if (client.readyState === 1 && !client.isESP32) {
@@ -264,7 +261,7 @@ wss.on("connection", (ws, req) => {
     console.error(`[${new Date().toISOString()}] [WS] Error from ${clientId}:`, err?.message || err);
   });
   
-  // 謗･邯夂｢ｺ隱阪Γ繝・そ繝ｼ繧ｸ繧帝√ｋ
+  // 接続確認メッセージを送る
   setTimeout(() => {
     if (ws.readyState === 1) {
       if (!ws.isESP32) {
@@ -283,7 +280,7 @@ wss.on("connection", (ws, req) => {
   }, 100);
 });
 
-// Ping/Pong縺ｫ繧医ｋ謗･邯夂ｶｭ謖・ｼ・0遘偵＃縺ｨ・・
+// Ping/Pongによる接続維持（48秒ごと）
 const interval = setInterval(() => {
   wss.clients.forEach((ws) => {
     if (ws.isAlive === false) {
@@ -300,7 +297,7 @@ wss.on("close", () => {
   clearInterval(interval);
 });
 
-// 繧ｰ繝ｬ繝ｼ繧ｹ繝輔Ν繧ｷ繝｣繝・ヨ繝繧ｦ繝ｳ
+// グレースフルシャットダウン
 function shutdown() {
   console.log(`[${new Date().toISOString()}] [Server] Shutting down gracefully...`);
   clearInterval(interval);
@@ -333,6 +330,3 @@ server.listen(PORT, () => {
   console.log(`[Server] Node version: ${process.version}`);
   console.log(`[Server] Platform: ${process.platform}`);
 });
-
-
-
