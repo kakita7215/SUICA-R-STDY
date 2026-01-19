@@ -633,6 +633,19 @@
     ant2Toggle.addEventListener("click", () => setAntEnabled(1, !antEnabled[1]));
     ant3Toggle.addEventListener("click", () => setAntEnabled(2, !antEnabled[2]));
 
+    function applyBulkToAntFields(){
+      if (repeatAll.value !== "") {
+        repeat1.value = repeatAll.value;
+        repeat2.value = repeatAll.value;
+        repeat3.value = repeatAll.value;
+      }
+      if (windowAll.value !== "") {
+        windowMs1.value = windowAll.value;
+        windowMs2.value = windowAll.value;
+        windowMs3.value = windowAll.value;
+      }
+    }
+
     setAntEnabled(0, true);
     setAntEnabled(1, false);
     setAntEnabled(2, false);
@@ -740,8 +753,6 @@
         windowMs1: toNumber(windowMs1.value, 0),
         windowMs2: toNumber(windowMs2.value, 0),
         windowMs3: toNumber(windowMs3.value, 0),
-        repeat: toNumber(repeatAll.value, 0),
-        windowMs: toNumber(windowAll.value, 0),
         ant1: antEnabled[0],
         ant2: antEnabled[1],
         ant3: antEnabled[2]
@@ -771,6 +782,9 @@
     setLang("ja");
     el("btnINV").addEventListener("click", sendRfidRead);
     el("btnApply").addEventListener("click", sendConfig);
+    el("btnCopyAll").addEventListener("click", applyBulkToAntFields);
+    repeatAll.addEventListener("input", applyBulkToAntFields);
+    windowAll.addEventListener("input", applyBulkToAntFields);
     connectWs();
   </script>
 </body>
