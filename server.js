@@ -293,7 +293,7 @@ const interval = setInterval(() => {
     ws.isAlive = false;
     ws.ping(() => {});
   });
-}, 60000);
+}, 48000);
 
 wss.on("close", () => {
   console.log("[WS] Server closing");
@@ -333,5 +333,6 @@ server.listen(PORT, () => {
   console.log(`[Server] Node version: ${process.version}`);
   console.log(`[Server] Platform: ${process.platform}`);
 });
+
 
 
