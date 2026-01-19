@@ -133,6 +133,14 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
+    }
+    
+    .tag-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
     }
     
     .tag-id {
@@ -140,6 +148,47 @@
       font-size: 14px;
       color: #333;
       word-break: break-all;
+    }
+    
+    .tag-name {
+      font-size: 13px;
+      color: #555;
+    }
+    
+    .tag-name-value {
+      font-weight: 600;
+    }
+    
+    .tag-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-end;
+    }
+    
+    .tag-action {
+      width: auto;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #5b68d9;
+      background: #fff;
+      border: 1px solid #5b68d9;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 0;
+      box-shadow: none;
+    }
+    
+    .tag-action:hover:not(:disabled) {
+      transform: none;
+      box-shadow: none;
+      background: #5b68d9;
+      color: #fff;
+    }
+    
+    .tag-action:active:not(:disabled) {
+      transform: none;
     }
     
     .tag-rssi {
@@ -215,6 +264,7 @@
     let isReading = false;
     let wsConnected = false;
     let esp32Online = false;
+    let tagNameMap = {};
 
     function connectWebSocket() {
       const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -239,6 +289,8 @@
             displayResults(data);
             isReading = false;
             updateButton();
+          } else if (data.type === 'tag_name_updated') {
+            applyTagNameUpdate(data);
           } else if (data.type === 'esp_status') {
             esp32Online = (data.status === 'online');
             updateStatus();
@@ -334,6 +386,59 @@
       
       ws.send(JSON.stringify({ type: 'rfid_read' }));
     }
+
+    function getSafeSelectorId(id) {
+      if (window.CSS && typeof CSS.escape === 'function') {
+        return CSS.escape(id);
+      }
+      return id.replace(/[\"\\]/g, '\\$&');
+    }
+
+    function applyTagNameUpdate(data) {
+      const id = typeof data.id === 'string' ? data.id : '';
+      const name = typeof data.name === 'string' ? data.name.trim() : '';
+
+      if (!id) return;
+
+      if (name) {
+        tagNameMap[id] = name;
+      } else {
+        delete tagNameMap[id];
+      }
+
+      const item = document.querySelector(`.tag-item[data-tag-id="${getSafeSelectorId(id)}"]`);
+      if (!item) return;
+
+      const nameValue = item.querySelector('.tag-name-value');
+      if (nameValue) {
+        nameValue.textContent = name || '未登録';
+      }
+
+      const actionBtn = item.querySelector('.tag-action');
+      if (actionBtn) {
+        actionBtn.textContent = name ? '名前変更' : '名前登録';
+      }
+    }
+
+    function promptTagName(id) {
+      const currentName = tagNameMap[id] || '';
+      const input = prompt(`タグ名を入力してください\nID: ${id}`, currentName);
+
+      if (input === null) return;
+
+      const name = input.trim();
+
+      if (!wsConnected || !ws) {
+        showError('WebSocket未接続');
+        return;
+      }
+
+      ws.send(JSON.stringify({
+        type: 'tag_name_set',
+        id,
+        name
+      }));
+    }
     
     function displayResults(data) {
       const countDiv = document.getElementById('tag-count');
@@ -348,12 +453,59 @@
       
       listDiv.innerHTML = '';
       data.tags.forEach(tag => {
+        const id = typeof tag.id === 'string' ? tag.id : String(tag.id ?? 'Unknown');
+
+        if (typeof tag.name === 'string' && tag.name.trim()) {
+          tagNameMap[id] = tag.name.trim();
+        }
+
+        const hasName = Boolean(tagNameMap[id]);
+        const name = hasName ? tagNameMap[id] : '未登録';
+        
         const item = document.createElement('div');
         item.className = 'tag-item';
-        item.innerHTML = `
-          <div class="tag-id">ID: ${tag.id || 'Unknown'}</div>
-          <div class="tag-rssi">RSSI: ${tag.rssi || 'N/A'} dBm</div>
-        `;
+        item.dataset.tagId = id;
+        
+        const info = document.createElement('div');
+        info.className = 'tag-info';
+        
+        const idDiv = document.createElement('div');
+        idDiv.className = 'tag-id';
+        idDiv.textContent = `ID: ${id}`;
+        
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'tag-name';
+        
+        const nameLabel = document.createElement('span');
+        nameLabel.textContent = '名称: ';
+        
+        const nameValue = document.createElement('span');
+        nameValue.className = 'tag-name-value';
+        nameValue.textContent = name;
+        
+        nameDiv.appendChild(nameLabel);
+        nameDiv.appendChild(nameValue);
+        info.appendChild(idDiv);
+        info.appendChild(nameDiv);
+        
+        const meta = document.createElement('div');
+        meta.className = 'tag-meta';
+        
+        const actionBtn = document.createElement('button');
+        actionBtn.className = 'tag-action';
+        actionBtn.type = 'button';
+        actionBtn.textContent = hasName ? '名前変更' : '名前登録';
+        actionBtn.addEventListener('click', () => promptTagName(id));
+        
+        const rssiDiv = document.createElement('div');
+        rssiDiv.className = 'tag-rssi';
+        rssiDiv.textContent = `RSSI: ${tag.rssi ?? 'N/A'} dBm`;
+        
+        meta.appendChild(actionBtn);
+        meta.appendChild(rssiDiv);
+        
+        item.appendChild(info);
+        item.appendChild(meta);
         listDiv.appendChild(item);
       });
     }
