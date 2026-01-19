@@ -176,6 +176,20 @@ wss.on("connection", (ws, req) => {
       return;
     }
 
+    if (data.type === "get_fw" || data.type === "get_temp" || data.type === "get_return_loss") {
+      console.log(`[${new Date().toISOString()}] [CMD] ${data.type} request from browser (${clientId})`);
+
+      if (esp32Socket && esp32Socket.readyState === 1) {
+        esp32Socket.send(JSON.stringify(data));
+      } else {
+        ws.send(JSON.stringify({
+          type: "error",
+          message: "ESP32 not connected"
+        }));
+      }
+      return;
+    }
+
 
     if (data.type === "tag_name_set") {
       const id = typeof data.id === "string" ? data.id.trim() : "";
@@ -234,6 +248,16 @@ wss.on("connection", (ws, req) => {
         }
       });
       console.log(`[RFID] Sent result to ${sent} browser clients`);
+      return;
+    }
+
+    if (data.type === "fw_result" || data.type === "temp_result" || data.type === "return_loss_result") {
+      const payload = JSON.stringify(data);
+      wss.clients.forEach((client) => {
+        if (client.readyState === 1 && !client.isESP32) {
+          client.send(payload);
+        }
+      });
       return;
     }
   });
