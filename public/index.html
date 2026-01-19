@@ -690,6 +690,41 @@
       el("rawPre").textContent = JSON.stringify(data, null, 2);
     }
 
+    function renderReturnLoss(items){
+      if (!Array.isArray(items) || items.length === 0){
+        el("rlBody").innerHTML = "<tr><td colspan=\"4\">-</td></tr>";
+        return;
+      }
+      const rows = items.map((item) => {
+        const ant = item.ant ?? "-";
+        const value = item.returnLoss ?? "-";
+        const raw = item.raw ?? "-";
+        return `
+          <tr>
+            <td>ANT${ant}</td>
+            <td style="text-align:center;">-</td>
+            <td>${value}</td>
+            <td>${raw}</td>
+          </tr>
+        `;
+      }).join("");
+      el("rlBody").innerHTML = rows;
+    }
+
+    function clearUi(){
+      el("pillFW").textContent = "FW: -";
+      el("pillTEMP").textContent = "TEMP: -";
+      el("pillPower").textContent = "Power: -";
+      el("pillRepeat").textContent = "Repeat: -";
+      el("pillWindow").textContent = "Window: -";
+      el("pillTags").textContent = "Tags: -";
+      el("pillReadMs").textContent = "readMs: -";
+      el("updatedAtText").textContent = "updatedAt: -";
+      el("rawPre").textContent = "{}";
+      el("tagBody").innerHTML = "<tr><td colspan=\"6\">-</td></tr>";
+      el("rlBody").innerHTML = "<tr><td colspan=\"4\">-</td></tr>";
+    }
+
     function renderTags(data){
       const tags = Array.isArray(data.tags) ? data.tags : [];
       if (tags.length === 0){
@@ -734,6 +769,27 @@
       if (data.type === "rfid_result"){
         renderSummary(data);
         renderTags(data);
+        return;
+      }
+
+      if (data.type === "fw_result"){
+        if (data.fwText) {
+          el("pillFW").textContent = "FW: " + data.fwText;
+        } else {
+          const esp = data.fwTextESP ?? "-";
+          const m702 = data.fwTextM702 ?? "-";
+          el("pillFW").textContent = "FW: ESP32 " + esp + " / M702 " + m702;
+        }
+        return;
+      }
+
+      if (data.type === "temp_result"){
+        el("pillTEMP").textContent = "TEMP: " + (data.tempText ?? "-");
+        return;
+      }
+
+      if (data.type === "return_loss_result"){
+        renderReturnLoss(data.items);
       }
     }
 
@@ -746,6 +802,12 @@
     function toNumber(value, fallback){
       const n = Number(value);
       return Number.isFinite(n) ? n : fallback;
+    }
+
+    function sendCommand(type){
+      if (ws && ws.readyState === WebSocket.OPEN){
+        ws.send(JSON.stringify({ type }));
+      }
     }
 
     function sendConfig(){
@@ -794,6 +856,10 @@
     el("btnINV").addEventListener("click", sendRfidRead);
     el("btnApply").addEventListener("click", sendConfig);
     el("btnCopyAll").addEventListener("click", applyBulkToAntFields);
+    el("btnFW").addEventListener("click", () => sendCommand("get_fw"));
+    el("btnTEMP").addEventListener("click", () => sendCommand("get_temp"));
+    el("btnRL").addEventListener("click", () => sendCommand("get_return_loss"));
+    el("btnCLEAR").addEventListener("click", clearUi);
     // Copy only when the button is pressed.
     connectWs();
   </script>
