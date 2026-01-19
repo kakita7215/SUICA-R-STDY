@@ -734,7 +734,9 @@
       const rows = tags.map((tag) => {
         const epc = tag.id ?? tag.epc ?? "";
         const rssi = Number(tag.rssi ?? 0);
+        const dupCount = Number(tag.count ?? 1);
         const show = (v) => (Number.isFinite(v) && v !== 0 ? v : "-");
+        const showCount = (v) => (Number.isFinite(v) ? v : "-");
         return `
           <tr>
             <td>${epc}</td>
@@ -742,7 +744,7 @@
             <td>-</td>
             <td>-</td>
             <td>${show(rssi)}</td>
-            <td>-</td>
+            <td>${showCount(dupCount)}</td>
           </tr>
         `;
       }).join("");
