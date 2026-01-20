@@ -455,6 +455,7 @@
         <thead>
           <tr>
             <th>EPC</th>
+            <th style="width:140px">NAME</th>
             <th style="width:90px">ANT1</th>
             <th style="width:90px">ANT2</th>
             <th style="width:90px">ANT3</th>
@@ -721,25 +722,36 @@
       el("pillReadMs").textContent = "readMs: -";
       el("updatedAtText").textContent = "updatedAt: -";
       el("rawPre").textContent = "{}";
-      el("tagBody").innerHTML = "<tr><td colspan=\"6\">-</td></tr>";
+      el("tagBody").innerHTML = "<tr><td colspan=\"7\">-</td></tr>";
       el("rlBody").innerHTML = "<tr><td colspan=\"4\">-</td></tr>";
     }
 
+    let lastTagData = null;
+
     function renderTags(data){
       const tags = Array.isArray(data.tags) ? data.tags : [];
+      lastTagData = data;
       if (tags.length === 0){
-        el("tagBody").innerHTML = "<tr><td colspan=\"6\">-</td></tr>";
+        el("tagBody").innerHTML = "<tr><td colspan=\"7\">-</td></tr>";
         return;
       }
       const rows = tags.map((tag) => {
         const epc = tag.id ?? tag.epc ?? "";
         const rssi = Number(tag.rssi ?? 0);
         const dupCount = Number(tag.count ?? 1);
+        const name = (tag.name && String(tag.name).trim()) ? String(tag.name).trim() : "";
         const show = (v) => (Number.isFinite(v) && v !== 0 ? v : "-");
         const showCount = (v) => (Number.isFinite(v) ? v : "-");
+        const nameCell = name
+          ? `<div>${name}</div>
+             <button class="btn" data-action="edit-name" data-id="${epc}">Edit</button>`
+          : `<div>新規アイテム</div>
+             <input class="tag-name-input" data-id="${epc}" type="text" maxlength="40" placeholder="名前を入力" />
+             <button class="btn" data-action="save-name" data-id="${epc}">Save</button>`;
         return `
           <tr>
             <td>${epc}</td>
+            <td>${nameCell}</td>
             <td>${show(rssi)}</td>
             <td>-</td>
             <td>-</td>
@@ -792,6 +804,19 @@
 
       if (data.type === "return_loss_result"){
         renderReturnLoss(data.items);
+        return;
+      }
+
+      if (data.type === "tag_name_updated"){
+        if (lastTagData && Array.isArray(lastTagData.tags)) {
+          lastTagData.tags = lastTagData.tags.map((tag) => {
+            if (String(tag.id) === String(data.id)) {
+              return { ...tag, name: data.name || "" };
+            }
+            return tag;
+          });
+          renderTags(lastTagData);
+        }
       }
     }
 
@@ -836,6 +861,13 @@
       ws.send(JSON.stringify(payload));
     }
 
+    function sendTagName(id, name){
+      if (!ws || ws.readyState !== WebSocket.OPEN){
+        return;
+      }
+      ws.send(JSON.stringify({ type: "tag_name_set", id, name }));
+    }
+
     function connectWs(){
       const protocol = location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${location.host}`;
@@ -862,6 +894,26 @@
     el("btnTEMP").addEventListener("click", () => sendCommand("get_temp"));
     el("btnRL").addEventListener("click", () => sendCommand("get_return_loss"));
     el("btnCLEAR").addEventListener("click", clearUi);
+    el("tagBody").addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const action = target.getAttribute("data-action");
+      if (!action) return;
+      const id = target.getAttribute("data-id") || "";
+      if (!id) return;
+      if (action === "save-name") {
+        const input = el("tagBody").querySelector(`.tag-name-input[data-id="${id}"]`);
+        if (input && input.value.trim()) {
+          sendTagName(id, input.value.trim());
+        }
+      }
+      if (action === "edit-name") {
+        const name = prompt("名前を入力してください", "");
+        if (name && name.trim()) {
+          sendTagName(id, name.trim());
+        }
+      }
+    });
     // Copy only when the button is pressed.
     connectWs();
   </script>
