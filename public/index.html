@@ -150,7 +150,7 @@
 
     .ctl-grid{
       display:grid;
-      grid-template-columns: 220px repeat(3, minmax(0, 1fr));
+      grid-template-columns: 220px 1fr;
       gap: 10px 12px;
       align-items:center;
       width:100%;
@@ -210,7 +210,7 @@
 
     .total-grid{
       display:grid;
-      grid-template-columns: 1fr 1fr auto auto;
+      grid-template-columns: 1fr;
       gap: 10px 12px;
       align-items:center;
       margin-top: 12px;
@@ -313,13 +313,13 @@
     @media (max-width: 760px){
       .wrap{ padding: 12px; }
       .title{ font-size: 22px; }
-      .ctl-grid{ grid-template-columns: 170px repeat(3, minmax(0,1fr)); }
+      .ctl-grid{ grid-template-columns: 170px 1fr; }
       .total-grid{ grid-template-columns: 1fr 1fr; }
       .total-grid .btn, .total-grid .btn.primary{ width:100%; }
     }
 
     @media (max-width: 520px){
-      .ctl-grid{ grid-template-columns: 150px repeat(3, minmax(0,1fr)); gap: 8px 8px; }
+      .ctl-grid{ grid-template-columns: 150px 1fr; gap: 8px 8px; }
       input[type="number"], input[type="text"]{ padding: 9px 10px; border-radius: 11px; }
       .anthead{ padding: 7px 8px; border-radius: 11px; font-size: 12px; }
       .rowlabel{ font-size: 13px; }
@@ -355,11 +355,11 @@
         <button class="btn" id="btnCLEAR">CLEAR</button>
       </div>
       <div class="hint" id="topHint">
-        ESP32がRFIDリーダーから情報を取得して実行します。（INV/RLはアンテナ1〜3のみ、4は未接続）
+        ESP32がRFIDリーダーから情報を取得して実行します。（INV/RLはアンテナ1のみ）
       </div>
     </div>
 
-    <div class="card">
+        <div class="card">
       <div class="controlHeader">
         <h3 id="ctlTitle">コントロール</h3>
         <div class="hint" id="ctlHint" style="margin:0">
@@ -370,38 +370,21 @@
       <div class="ctl-grid">
         <div></div>
         <div class="anthead">ANT-1</div>
-        <div class="anthead">ANT-2</div>
-        <div class="anthead">ANT-3</div>
 
         <div class="rowlabel" id="lblEnable">Enable</div>
         <button id="ant1Toggle" class="antToggle on">ON</button>
-        <button id="ant2Toggle" class="antToggle off">OFF</button>
-        <button id="ant3Toggle" class="antToggle off">OFF</button>
 
         <div class="rowlabel" id="lblPower">Power(dBm) 0〜33</div>
         <input id="power1" type="number" min="0" max="33" />
-        <input id="power2" type="number" min="0" max="33" />
-        <input id="power3" type="number" min="0" max="33" />
 
         <div class="rowlabel" id="lblRepeatPer">Repeat（ANT別）</div>
         <input id="repeat1" type="number" min="1" max="255" />
-        <input id="repeat2" type="number" min="1" max="255" />
-        <input id="repeat3" type="number" min="1" max="255" />
 
         <div class="rowlabel" id="lblWindowPer">Window(ms)（ANT別）</div>
         <input id="windowMs1" type="number" min="50" max="5000" />
-        <input id="windowMs2" type="number" min="50" max="5000" />
-        <input id="windowMs3" type="number" min="50" max="5000" />
       </div>
 
       <div class="total-grid">
-        <div class="rowlabel" id="lblRepeatAll">Repeat（一括設定）</div>
-        <input id="repeatAll" type="number" min="1" max="255" />
-
-        <div class="rowlabel" id="lblWindowAll">Window(ms)（一括設定）</div>
-        <input id="windowAll" type="number" min="50" max="5000" />
-
-        <button class="btn" id="btnCopyAll">全体値をANT別にコピー</button>
         <button class="btn primary" id="btnApply">Apply</button>
       </div>
 
@@ -457,9 +440,6 @@
             <th>EPC</th>
             <th style="width:140px">NAME</th>
             <th style="width:90px">ANT1</th>
-            <th style="width:90px">ANT2</th>
-            <th style="width:90px">ANT3</th>
-            <th style="width:90px">BEST</th>
             <th style="width:90px">CONF</th>
           </tr>
         </thead>
@@ -472,7 +452,7 @@
     const I18N = {
       ko: {
         title: "SUICA R PJ Monitor",
-        topHint: "ESP32가 RFID 리더에서 정보를 받아 실행합니다. (INV/RL은 안테나 1~3만, 4는 미연결)",
+        topHint: "ESP32가 RFID 리더에서 정보를 받아 실행합니다. (INV/RL은 안테나 1만)",
         controlTitle: "컨트롤",
         controlHint: "Power/Repeat/Window는 인벤토리 동작에 즉시 반영됩니다.",
         labelPower: "Power(dBm) 0〜33",
@@ -500,7 +480,7 @@
       },
       ja: {
         title: "SUICA R PJ Monitor",
-        topHint: "ESP32がRFIDリーダーから情報を取得して実行します。（INV/RLはアンテナ1〜3のみ、4は未接続）",
+        topHint: "ESP32がRFIDリーダーから情報を取得して実行します。（INV/RLはアンテナ1のみ）",
         controlTitle: "コントロール",
         controlHint: "Power/Repeat/Windowはインベントリ動作に即時反映されます。",
         labelPower: "Power(dBm) 0〜33",
@@ -553,11 +533,11 @@
       el("ctlHint").textContent = t.controlHint;
       el("lblPower").textContent = t.labelPower;
       el("lblEnable").textContent = t.labelEnable;
-      el("lblRepeatAll").textContent = t.labelRepeatAll;
-      el("lblWindowAll").textContent = t.labelWindowAll;
+      if (el("lblRepeatAll")) { el("lblRepeatAll").textContent = t.labelRepeatAll; }
+      if (el("lblWindowAll")) { el("lblWindowAll").textContent = t.labelWindowAll; }
       el("lblRepeatPer").textContent = t.labelRepeatPer;
       el("lblWindowPer").textContent = t.labelWindowPer;
-      el("btnCopyAll").textContent = t.btnCopyAll;
+      if (el("btnCopyAll")) { el("btnCopyAll").textContent = t.btnCopyAll; }
       el("btnApply").textContent = t.btnApply;
       el("rlInfo").textContent = t.rlInfo + " " + t.antOffHint;
       el("sumTitle").textContent = t.summaryTitle;
@@ -580,87 +560,45 @@
 
     applyTheme(theme);
 
-    const power1 = el("power1"), power2 = el("power2"), power3 = el("power3");
-    const repeat1 = el("repeat1"), repeat2 = el("repeat2"), repeat3 = el("repeat3");
-    const windowMs1 = el("windowMs1"), windowMs2 = el("windowMs2"), windowMs3 = el("windowMs3");
-    const repeatAll = el("repeatAll"), windowAll = el("windowAll");
-    const ant1Toggle = el("ant1Toggle"), ant2Toggle = el("ant2Toggle"), ant3Toggle = el("ant3Toggle");
+        const power1 = el("power1");
+    const repeat1 = el("repeat1");
+    const windowMs1 = el("windowMs1");
+    const ant1Toggle = el("ant1Toggle");
 
-    const antEnabled = [true, false, false];
-    const powerCache = [null, null, null];
+    const antEnabled = [true];
+    let powerCache = null;
 
-    function toggleInputDisabled(idx, disabled){
-      const r = idx === 0 ? repeat1 : (idx === 1 ? repeat2 : repeat3);
-      const w = idx === 0 ? windowMs1 : (idx === 1 ? windowMs2 : windowMs3);
-      if (idx === 0) power1.disabled = disabled;
-      if (idx === 1) power2.disabled = disabled;
-      if (idx === 2) power3.disabled = disabled;
-      r.disabled = disabled;
-      w.disabled = disabled;
+        function toggleInputDisabled(disabled){
+      power1.disabled = disabled;
+      repeat1.disabled = disabled;
+      windowMs1.disabled = disabled;
     }
 
-    function setAntEnabled(idx, enabled){
-      antEnabled[idx] = enabled;
+    function setAntEnabled(enabled){
+      antEnabled[0] = enabled;
       if (enabled){
-        const cached = powerCache[idx];
-        const fallback = 8;
-        const restored = (cached !== null && Number.isFinite(cached)) ? cached : fallback;
-        if (idx === 0) power1.value = restored;
-        if (idx === 1) power2.value = restored;
-        if (idx === 2) power3.value = restored;
-        toggleInputDisabled(idx, false);
+        const restored = (powerCache !== null && Number.isFinite(powerCache)) ? powerCache : 8;
+        power1.value = restored;
+        toggleInputDisabled(false);
       } else {
-        const current = idx === 0 ? Number(power1.value) : (idx === 1 ? Number(power2.value) : Number(power3.value));
-        if (Number.isFinite(current) && current > 0) powerCache[idx] = current;
-        if (idx === 0) power1.value = 0;
-        if (idx === 1) power2.value = 0;
-        if (idx === 2) power3.value = 0;
-        toggleInputDisabled(idx, true);
+        const current = Number(power1.value);
+        if (Number.isFinite(current) && current > 0) powerCache = current;
+        power1.value = 0;
+        toggleInputDisabled(true);
       }
       updateAntToggleUI();
     }
 
     function updateAntToggleUI(){
       const t = I18N[lang];
-      const buttons = [ant1Toggle, ant2Toggle, ant3Toggle];
-      buttons.forEach((btn, idx)=>{
-        btn.classList.toggle("on", antEnabled[idx]);
-        btn.classList.toggle("off", !antEnabled[idx]);
-        btn.textContent = antEnabled[idx] ? t.btnOn : t.btnOff;
-      });
+      ant1Toggle.classList.toggle("on", antEnabled[0]);
+      ant1Toggle.classList.toggle("off", !antEnabled[0]);
+      ant1Toggle.textContent = antEnabled[0] ? t.btnOn : t.btnOff;
     }
 
-    ant1Toggle.addEventListener("click", () => setAntEnabled(0, !antEnabled[0]));
-    ant2Toggle.addEventListener("click", () => setAntEnabled(1, !antEnabled[1]));
-    ant3Toggle.addEventListener("click", () => setAntEnabled(2, !antEnabled[2]));
+    ant1Toggle.addEventListener("click", () => setAntEnabled(!antEnabled[0]));
 
-    function normalizeNumberInput(value){
-      if (typeof value !== "string") return null;
-      const normalized = value.replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)).trim();
-      if (normalized === "") return null;
-      const num = Number(normalized);
-      if (!Number.isFinite(num)) return null;
-      return normalized;
-    }
-
-    function applyBulkToAntFields(){
-      const repeatValue = normalizeNumberInput(repeatAll.value);
-      const windowValue = normalizeNumberInput(windowAll.value);
-      if (repeatValue !== null) {
-        repeat1.value = repeatValue;
-        repeat2.value = repeatValue;
-        repeat3.value = repeatValue;
-      }
-      if (windowValue !== null) {
-        windowMs1.value = windowValue;
-        windowMs2.value = windowValue;
-        windowMs3.value = windowValue;
-      }
-    }
-
-    setAntEnabled(0, true);
-    setAntEnabled(1, false);
-    setAntEnabled(2, false);
+    setAntEnabled(true);
 
     function updateConnectionBadge(status){
       const t = I18N[lang];
@@ -693,7 +631,7 @@
 
     function renderReturnLoss(items){
       if (!Array.isArray(items) || items.length === 0){
-        el("rlBody").innerHTML = "<tr><td colspan=\"4\">-</td></tr>";
+        el("rlBody").innerHTML = '<tr><td colspan="4">-</td></tr>';
         return;
       }
       const rows = items.map((item) => {
@@ -722,17 +660,17 @@
       el("pillReadMs").textContent = "readMs: -";
       el("updatedAtText").textContent = "updatedAt: -";
       el("rawPre").textContent = "{}";
-      el("tagBody").innerHTML = "<tr><td colspan=\"7\">-</td></tr>";
-      el("rlBody").innerHTML = "<tr><td colspan=\"4\">-</td></tr>";
+      el("tagBody").innerHTML = '<tr><td colspan="4">-</td></tr>';
+      el("rlBody").innerHTML = '<tr><td colspan="4">-</td></tr>';
     }
 
     let lastTagData = null;
 
-    function renderTags(data){
+        function renderTags(data){
       const tags = Array.isArray(data.tags) ? data.tags : [];
       lastTagData = data;
       if (tags.length === 0){
-        el("tagBody").innerHTML = "<tr><td colspan=\"7\">-</td></tr>";
+        el("tagBody").innerHTML = '<tr><td colspan="4">-</td></tr>';
         return;
       }
       const rows = tags.map((tag) => {
@@ -752,9 +690,6 @@
           <tr>
             <td>${epc}</td>
             <td>${nameCell}</td>
-            <td>${show(rssi)}</td>
-            <td>-</td>
-            <td>-</td>
             <td>${show(rssi)}</td>
             <td>${showCount(dupCount)}</td>
           </tr>
@@ -842,20 +777,12 @@
         return;
       }
 
-      const payload = {
+            const payload = {
         type: "config",
         power1: toNumber(power1.value, 0),
-        power2: toNumber(power2.value, 0),
-        power3: toNumber(power3.value, 0),
         repeat1: toNumber(repeat1.value, 0),
-        repeat2: toNumber(repeat2.value, 0),
-        repeat3: toNumber(repeat3.value, 0),
         windowMs1: toNumber(windowMs1.value, 0),
-        windowMs2: toNumber(windowMs2.value, 0),
-        windowMs3: toNumber(windowMs3.value, 0),
-        ant1: antEnabled[0],
-        ant2: antEnabled[1],
-        ant3: antEnabled[2]
+        ant1: antEnabled[0]
       };
 
       ws.send(JSON.stringify(payload));
@@ -889,7 +816,6 @@
     setLang("ja");
     el("btnINV").addEventListener("click", sendRfidRead);
     el("btnApply").addEventListener("click", sendConfig);
-    el("btnCopyAll").addEventListener("click", applyBulkToAntFields);
     el("btnFW").addEventListener("click", () => sendCommand("get_fw"));
     el("btnTEMP").addEventListener("click", () => sendCommand("get_temp"));
     el("btnRL").addEventListener("click", () => sendCommand("get_return_loss"));
@@ -919,6 +845,22 @@
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
