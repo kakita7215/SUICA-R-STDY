@@ -407,6 +407,8 @@
         <div class="pill" id="pillWindow">Window: -</div>
         <div class="pill" id="pillTags">Tags: -</div>
         <div class="pill" id="pillReadMs">readMs: -</div>
+        <div class="pill" id="pillExtTemp">Ext Temp: -</div>
+        <div class="pill" id="pillExtHum">Ext Hum: -</div>
       </div>
 
       <h4 id="rlTitle" style="margin:14px 0 6px 0">Return Loss（アンテナ状態）</h4>
@@ -658,6 +660,8 @@
       el("pillWindow").textContent = "Window: -";
       el("pillTags").textContent = "Tags: -";
       el("pillReadMs").textContent = "readMs: -";
+      el("pillExtTemp").textContent = "Ext Temp: -";
+      el("pillExtHum").textContent = "Ext Hum: -";
       el("updatedAtText").textContent = "updatedAt: -";
       el("rawPre").textContent = "{}";
       el("tagBody").innerHTML = '<tr><td colspan="4">-</td></tr>';
@@ -734,6 +738,8 @@
 
       if (data.type === "temp_result"){
         el("pillTEMP").textContent = "TEMP: " + (data.tempText ?? "-");
+        el("pillExtTemp").textContent = "Ext Temp: " + (data.extTempText ?? "-");
+        el("pillExtHum").textContent = "Ext Hum: " + (data.extHumText ?? "-");
         return;
       }
 
