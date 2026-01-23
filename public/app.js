@@ -211,6 +211,8 @@
     function renderSummary(data){
       el("pillFW").textContent = "FW: " + (data.fwText ?? "-");
       el("pillTEMP").textContent = "TEMP: " + (data.tempText ?? "-");
+      el("pillExtTemp").textContent = "Ext Temp: " + (data.extTempText ?? "-");
+      el("pillExtHum").textContent = "Ext Hum: " + (data.extHumText ?? "-");
       el("pillPower").textContent = "Power: " + (data.power1 ?? "-") + " dBm";
       el("pillRepeat").textContent = "Repeat: " + (data.repeat1 ?? "-");
       el("pillWindow").textContent = "Window: " + (data.windowMs1 ?? "-") + " ms";
