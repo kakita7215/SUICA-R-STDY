@@ -21,6 +21,8 @@
         rlDesc: "Return Loss는 안테나 매칭 지표입니다. (RF 출력과 별도)",
         rawToggle: "Raw Data (Debug JSON) 표시/숨김",
         tagTitle: "태그",
+        serverLabel: "서버",
+        espLabel: "ESP32",
         connected: "연결됨",
         disconnected: "연결 끊김",
         statusOK: "OK",
@@ -48,6 +50,8 @@
         rlDesc: "Return Lossはアンテナ整合の指標です。（RF出力とは別）",
         rawToggle: "▶ Raw Data (Debug JSON) 表示/非表示",
         tagTitle: "タグ",
+        serverLabel: "サーバー",
+        espLabel: "ESP32",
         connected: "CONNECTED",
         disconnected: "DISCONNECTED",
         statusOK: "OK",
@@ -98,7 +102,8 @@
       el("btnJa").classList.toggle("active", lang === "ja");
 
       updateAntToggleUI();
-      updateConnectionBadge(lastEspStatus);
+      updateServerBadge(lastServerStatus);
+      updateEspBadge(lastEspStatus);
     }
 
     el("btnKo").addEventListener("click", () => setLang("ko"));
@@ -194,17 +199,31 @@
     setAntEnabled(1, false);
     setAntEnabled(2, false);
 
-    function updateConnectionBadge(status){
+    function updateServerBadge(status){
       const t = I18N[lang];
-      const b = el("connBadge");
+      const b = el("serverBadge");
       if (status === "online"){
         b.classList.remove("ng");
         b.classList.add("ok");
-        b.textContent = t.connected;
+        b.textContent = `${t.serverLabel}: ${t.connected}`;
       } else {
         b.classList.remove("ok");
         b.classList.add("ng");
-        b.textContent = t.disconnected;
+        b.textContent = `${t.serverLabel}: ${t.disconnected}`;
+      }
+    }
+
+    function updateEspBadge(status){
+      const t = I18N[lang];
+      const b = el("espBadge");
+      if (status === "online"){
+        b.classList.remove("ng");
+        b.classList.add("ok");
+        b.textContent = `${t.espLabel}: ${t.connected}`;
+      } else {
+        b.classList.remove("ok");
+        b.classList.add("ng");
+        b.textContent = `${t.espLabel}: ${t.disconnected}`;
       }
     }
 
@@ -299,6 +318,7 @@
       el("tagBody").innerHTML = rows;
     }
 
+    let lastServerStatus = "offline";
     let lastEspStatus = "offline";
     let ws = null;
 
@@ -312,7 +332,7 @@
 
       if (data.type === "esp_status"){
         lastEspStatus = data.status || "offline";
-        updateConnectionBadge(lastEspStatus);
+        updateEspBadge(lastEspStatus);
         return;
       }
 
@@ -412,12 +432,15 @@
       ws = new WebSocket(wsUrl);
 
       ws.addEventListener("open", () => {
-        updateConnectionBadge(lastEspStatus);
+        lastServerStatus = "online";
+        updateServerBadge(lastServerStatus);
       });
 
       ws.addEventListener("close", () => {
+        lastServerStatus = "offline";
+        updateServerBadge(lastServerStatus);
         lastEspStatus = "offline";
-        updateConnectionBadge(lastEspStatus);
+        updateEspBadge(lastEspStatus);
         setTimeout(connectWs, 3000);
       });
 
