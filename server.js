@@ -28,8 +28,9 @@ const wss = new WebSocketServer({
 
 const PORT = process.env.PORT || 3000;
 
-const DATA_DIR = path.join(__dirname, "data");
-const TAG_NAMES_FILE = path.join(DATA_DIR, "tag-names.json");
+const DATA_DIR = process.env.TAG_NAMES_DIR || path.join(__dirname, "data");
+const TAG_NAMES_FILE =
+  process.env.TAG_NAMES_FILE || path.join(DATA_DIR, "tag-names.json");
 let tagNames = {};
 
 async function loadTagNames() {
