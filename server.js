@@ -318,7 +318,7 @@ const interval = setInterval(() => {
     ws.isAlive = false;
     ws.ping(() => {});
   });
-}, 48000);
+}, 45000);
 
 wss.on("close", () => {
   console.log("[WS] Server closing");
