@@ -186,6 +186,12 @@
     }
 
     setAntEnabled(0, true);
+    repeat1.value = 5;
+    windowMs1.value = 500;
+    repeat2.value = 0;
+    windowMs2.value = 0;
+    repeat3.value = 0;
+    windowMs3.value = 0;
     setAntEnabled(1, false);
     setAntEnabled(2, false);
 
