@@ -347,8 +347,8 @@
           el("pillFW").textContent = "FW: " + data.fwText;
         } else {
           const esp = data.fwTextESP ?? "-";
-          const m702 = data.fwTextM702 ?? "-";
-          el("pillFW").textContent = "FW: ESP32 " + esp + " / M702 " + m702;
+          const m701 = data.fwTextM701 ?? "-";
+          el("pillFW").textContent = "FW: ESP32 " + esp + " / M701 " + m701;
         }
         return;
       }
