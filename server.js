@@ -28,9 +28,9 @@ const wss = new WebSocketServer({
 
 const PORT = process.env.PORT || 3000;
 
-// Tag name storage path (optional):
-// - TAG_NAMES_DIR: save to <TAG_NAMES_DIR>/tag-names.json
-// - TAG_NAMES_FILE: full path override (takes precedence)
+// タグ名の保存先（任意）:
+// - TAG_NAMES_DIR: <TAG_NAMES_DIR>/tag-names.json に保存
+// - TAG_NAMES_FILE: 完全パスで上書き（こちらが優先）
 const DATA_DIR = process.env.TAG_NAMES_DIR || path.join(__dirname, "data");
 const TAG_NAMES_FILE =
   process.env.TAG_NAMES_FILE || path.join(DATA_DIR, "tag-names.json");
