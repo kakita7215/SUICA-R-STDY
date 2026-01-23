@@ -1,5 +1,5 @@
 ﻿    const I18N = {
-      ko: {
+                        ko: {
         title: "SUICA R PJ Monitor",
         topHint: "ESP32가 RFID 리더에서 정보를 받아 실행합니다. (INV/RL은 안테나 1-3만, 4는 미연결)",
         controlTitle: "컨트롤",
@@ -26,8 +26,7 @@
         statusOK: "OK",
         statusNG: "NG",
         statusNC: "미연결"
-      },
-      ja: {
+      },ja: {
         title: "SUICA R PJ Monitor",
         topHint: "ESP32がRFIDリーダーから情報を取得して実行します。（INV/RLはアンテナ1〜3のみ、4は未接続）",
         controlTitle: "コントロール",
@@ -456,5 +455,9 @@
     // Copy only when the button is pressed.
     connectWs();
   
+
+
+
+
 
 
