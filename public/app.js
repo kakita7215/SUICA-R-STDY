@@ -19,6 +19,7 @@
         summaryTitle: "요약",
         rlTitle: "Return Loss(안테나 상태)",
         rlDesc: "Return Loss는 안테나 매칭 지표입니다. (RF 출력과 별도)",
+        statusHeader: "상태",
         rawToggle: "Raw Data (Debug JSON) 표시/숨김",
         tagTitle: "태그",
         serverLabel: "서버",
@@ -48,6 +49,7 @@
         summaryTitle: "サマリー",
         rlTitle: "Return Loss（アンテナ状態）",
         rlDesc: "Return Lossはアンテナ整合の指標です。（RF出力とは別）",
+        statusHeader: "状態",
         rawToggle: "▶ Raw Data (Debug JSON) 表示/非表示",
         tagTitle: "タグ",
         serverLabel: "サーバー",
@@ -95,6 +97,7 @@
       el("sumTitle").textContent = t.summaryTitle;
       el("rlTitle").textContent = t.rlTitle;
       el("rlDesc").textContent = t.rlDesc;
+      el("rlStatusHead").textContent = t.statusHeader;
       el("rawToggle").textContent = t.rawToggle;
       el("tagTitle").textContent = t.tagTitle;
 
