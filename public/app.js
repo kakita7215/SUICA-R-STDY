@@ -15,6 +15,11 @@
         labelWindowPer: "Window(ms)(ANT별)",
         btnCopyAll: "전체 값을 ANT별로 복사",
         btnApply: "Apply",
+        btnFW: "FW",
+        btnTEMP: "TEMP",
+        btnINV: "인벤토리",
+        btnRL: "반사 손실",
+        btnCLEAR: "초기화",
         rlInfo: "Return Loss의 값은 안테나 매칭 지표로, RF 출력(dBm)과는 별도입니다.",
         summaryTitle: "요약",
         rlTitle: "Return Loss(안테나 상태)",
@@ -22,6 +27,22 @@
         statusHeader: "상태",
         rawToggle: "Raw Data (Debug JSON) 표시/숨김",
         tagTitle: "태그",
+        multiNewError: "1개씩 등록해주세요.",
+        newItemLabel: "신규 아이템",
+        namePlaceholder: "이름 입력",
+        saveLabel: "저장",
+        editLabel: "수정",
+        promptName: "이름을 입력해주세요",
+        fwLabel: "FW",
+        tempLabel: "온도",
+        extTempLabel: "외부 온도",
+        extHumLabel: "외부 습도",
+        powerLabel: "출력",
+        repeatLabel: "반복",
+        windowLabel: "윈도우",
+        tagsLabel: "태그",
+        readMsLabel: "읽기시간",
+        updatedAtLabel: "업데이트",
         serverLabel: "서버",
         espLabel: "ESP32",
         connected: "연결됨",
@@ -45,6 +66,11 @@
         labelWindowPer: "Window(ms)（ANT別）",
         btnCopyAll: "全体値をANT別にコピー",
         btnApply: "Apply",
+        btnFW: "FW",
+        btnTEMP: "TEMP",
+        btnINV: "INVENTORY",
+        btnRL: "RETURN LOSS",
+        btnCLEAR: "CLEAR",
         rlInfo: "※ Return Lossのvalueはアンテナ整合の指標で、RF出力(dBm)とは別の値です。",
         summaryTitle: "サマリー",
         rlTitle: "Return Loss（アンテナ状態）",
@@ -52,6 +78,22 @@
         statusHeader: "状態",
         rawToggle: "▶ Raw Data (Debug JSON) 表示/非表示",
         tagTitle: "タグ",
+        multiNewError: "1枚ずつ登録してください。",
+        newItemLabel: "新規アイテム",
+        namePlaceholder: "名前を入力",
+        saveLabel: "Save",
+        editLabel: "Edit",
+        promptName: "名前を入力してください",
+        fwLabel: "FW",
+        tempLabel: "TEMP",
+        extTempLabel: "Ext Temp",
+        extHumLabel: "Ext Hum",
+        powerLabel: "Power",
+        repeatLabel: "Repeat",
+        windowLabel: "Window",
+        tagsLabel: "Tags",
+        readMsLabel: "readMs",
+        updatedAtLabel: "updatedAt",
         serverLabel: "サーバー",
         espLabel: "ESP32",
         connected: "CONNECTED",
@@ -93,6 +135,11 @@
       el("lblWindowPer").textContent = t.labelWindowPer;
       if (el("btnCopyAll")) { el("btnCopyAll").textContent = t.btnCopyAll; }
       el("btnApply").textContent = t.btnApply;
+      el("btnFW").textContent = t.btnFW;
+      el("btnTEMP").textContent = t.btnTEMP;
+      el("btnINV").textContent = t.btnINV;
+      el("btnRL").textContent = t.btnRL;
+      el("btnCLEAR").textContent = t.btnCLEAR;
       el("rlInfo").textContent = t.rlInfo + " " + t.antOffHint;
       el("sumTitle").textContent = t.summaryTitle;
       el("rlTitle").textContent = t.rlTitle;
@@ -231,19 +278,20 @@
     }
 
     function renderSummary(data){
-      el("pillFW").textContent = "FW: " + (data.fwText ?? "-");
-      el("pillTEMP").textContent = "TEMP: " + (data.tempText ?? "-");
-      el("pillExtTemp").textContent = "Ext Temp: " + (data.extTempText ?? "-");
-      el("pillExtHum").textContent = "Ext Hum: " + (data.extHumText ?? "-");
-      el("pillPower").textContent = "Power: " + (data.power1 ?? "-") + " dBm";
-      el("pillRepeat").textContent = "Repeat: " + (data.repeat1 ?? "-");
-      el("pillWindow").textContent = "Window: " + (data.windowMs1 ?? "-") + " ms";
+      const t = I18N[lang];
+      el("pillFW").textContent = `${t.fwLabel}: ` + (data.fwText ?? "-");
+      el("pillTEMP").textContent = `${t.tempLabel}: ` + (data.tempText ?? "-");
+      el("pillExtTemp").textContent = `${t.extTempLabel}: ` + (data.extTempText ?? "-");
+      el("pillExtHum").textContent = `${t.extHumLabel}: ` + (data.extHumText ?? "-");
+      el("pillPower").textContent = `${t.powerLabel}: ` + (data.power1 ?? "-") + " dBm";
+      el("pillRepeat").textContent = `${t.repeatLabel}: ` + (data.repeat1 ?? "-");
+      el("pillWindow").textContent = `${t.windowLabel}: ` + (data.windowMs1 ?? "-") + " ms";
       const tagCount = data.count ?? (Array.isArray(data.tags) ? data.tags.length : 0);
-      el("pillTags").textContent = "Tags: " + tagCount;
-      el("pillReadMs").textContent = "readMs: " + (data.readMs ?? "-");
+      el("pillTags").textContent = `${t.tagsLabel}: ` + tagCount;
+      el("pillReadMs").textContent = `${t.readMsLabel}: ` + (data.readMs ?? "-");
 
       const dt = new Date();
-      el("updatedAtText").textContent = "updatedAt: " + dt.toLocaleString();
+      el("updatedAtText").textContent = `${t.updatedAtLabel}: ` + dt.toLocaleString();
       el("rawPre").textContent = JSON.stringify(data, null, 2);
     }
 
@@ -269,16 +317,17 @@
     }
 
     function clearUi(){
-      el("pillFW").textContent = "FW: -";
-      el("pillTEMP").textContent = "TEMP: -";
-      el("pillPower").textContent = "Power: -";
-      el("pillRepeat").textContent = "Repeat: -";
-      el("pillWindow").textContent = "Window: -";
-      el("pillTags").textContent = "Tags: -";
-      el("pillReadMs").textContent = "readMs: -";
-      el("pillExtTemp").textContent = "Ext Temp: -";
-      el("pillExtHum").textContent = "Ext Hum: -";
-      el("updatedAtText").textContent = "updatedAt: -";
+      const t = I18N[lang];
+      el("pillFW").textContent = `${t.fwLabel}: -`;
+      el("pillTEMP").textContent = `${t.tempLabel}: -`;
+      el("pillPower").textContent = `${t.powerLabel}: -`;
+      el("pillRepeat").textContent = `${t.repeatLabel}: -`;
+      el("pillWindow").textContent = `${t.windowLabel}: -`;
+      el("pillTags").textContent = `${t.tagsLabel}: -`;
+      el("pillReadMs").textContent = `${t.readMsLabel}: -`;
+      el("pillExtTemp").textContent = `${t.extTempLabel}: -`;
+      el("pillExtHum").textContent = `${t.extHumLabel}: -`;
+      el("updatedAtText").textContent = `${t.updatedAtLabel}: -`;
       el("rawPre").textContent = "{}";
       el("tagBody").innerHTML = '<tr><td colspan="7">-</td></tr>';
       el("rlBody").innerHTML = '<tr><td colspan="4">-</td></tr>';
@@ -290,9 +339,18 @@
       const tags = Array.isArray(data.tags) ? data.tags : [];
       lastTagData = data;
       if (tags.length === 0){
+        allowNewRegistration = true;
         el("tagBody").innerHTML = '<tr><td colspan="7">-</td></tr>';
         return;
       }
+      const unnamedTags = tags.filter((tag) => !(tag.name && String(tag.name).trim()));
+      allowNewRegistration = unnamedTags.length <= 1;
+      if (unnamedTags.length > 1){
+        const t = I18N[lang];
+        el("tagBody").innerHTML = `<tr><td colspan="7">${t.multiNewError}</td></tr>`;
+        return;
+      }
+      const t = I18N[lang];
       const rows = tags.map((tag) => {
         const epc = tag.id ?? tag.epc ?? "";
         const rssi = Number(tag.rssi ?? 0);
@@ -302,10 +360,10 @@
         const showCount = (v) => (Number.isFinite(v) ? v : "-");
         const nameCell = name
           ? `<div>${name}</div>
-             <button class="btn" data-action="edit-name" data-id="${epc}">Edit</button>`
-          : `<div>新規アイテム</div>
-             <input class="tag-name-input" data-id="${epc}" type="text" maxlength="40" placeholder="名前を入力" />
-             <button class="btn" data-action="save-name" data-id="${epc}">Save</button>`;
+             <button class="btn" data-action="edit-name" data-id="${epc}">${t.editLabel}</button>`
+          : `<div>${t.newItemLabel}</div>
+             <input class="tag-name-input" data-id="${epc}" type="text" maxlength="40" placeholder="${t.namePlaceholder}" />
+             <button class="btn" data-action="save-name" data-id="${epc}">${t.saveLabel}</button>`;
         return `
           <tr>
             <td>${epc}</td>
@@ -323,6 +381,7 @@
 
     let lastServerStatus = "offline";
     let lastEspStatus = "offline";
+    let allowNewRegistration = true;
     let ws = null;
 
     function handleWsMessage(event){
@@ -357,9 +416,10 @@
       }
 
       if (data.type === "temp_result"){
-        el("pillTEMP").textContent = "TEMP: " + (data.tempText ?? "-");
-        el("pillExtTemp").textContent = "Ext Temp: " + (data.extTempText ?? "-");
-        el("pillExtHum").textContent = "Ext Hum: " + (data.extHumText ?? "-");
+        const t = I18N[lang];
+        el("pillTEMP").textContent = `${t.tempLabel}: ` + (data.tempText ?? "-");
+        el("pillExtTemp").textContent = `${t.extTempLabel}: ` + (data.extTempText ?? "-");
+        el("pillExtHum").textContent = `${t.extHumLabel}: ` + (data.extHumText ?? "-");
         return;
       }
 
@@ -463,6 +523,11 @@
       if (!(target instanceof HTMLElement)) return;
       const action = target.getAttribute("data-action");
       if (!action) return;
+      if (action === "save-name" && !allowNewRegistration) {
+        const t = I18N[lang];
+        alert(t.multiNewError);
+        return;
+      }
       const id = target.getAttribute("data-id") || "";
       if (!id) return;
       if (action === "save-name") {
@@ -472,7 +537,8 @@
         }
       }
       if (action === "edit-name") {
-        const name = prompt("名前を入力してください", "");
+        const t = I18N[lang];
+        const name = prompt(t.promptName, "");
         if (name && name.trim()) {
           sendTagName(id, name.trim());
         }
