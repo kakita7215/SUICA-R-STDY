@@ -1,9 +1,9 @@
-import express from "express";
+﻿import express from "express";
 import http from "http";
 import path from "path";
-import fs from "fs/promises";
 import { fileURLToPath } from "url";
 import { WebSocketServer } from "ws";
+import pg from "pg";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,43 +28,69 @@ const wss = new WebSocketServer({
 
 const PORT = process.env.PORT || 3000;
 
-// タグ名の保存先（任意）:
-// - TAG_NAMES_DIR: <TAG_NAMES_DIR>/tag-names.json に保存
-// - TAG_NAMES_FILE: 完全パスで上書き（こちらが優先）
-const DATA_DIR = process.env.TAG_NAMES_DIR || path.join(__dirname, "data");
-const TAG_NAMES_FILE =
-  process.env.TAG_NAMES_FILE || path.join(DATA_DIR, "tag-names.json");
+// タグ名はPostgreSQLに保存します（Render PostgreSQL想定）。
+// 接続先は DATABASE_URL を使用します。
+const DATABASE_URL = process.env.DATABASE_URL || "";
+const pool = DATABASE_URL
+  ? new pg.Pool({
+      connectionString: DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    })
+  : null;
+
 let tagNames = {};
 
-async function loadTagNames() {
+async function initTagNames() {
+  if (!pool) {
+    console.warn("[Tags] DATABASE_URL not set; tag names will not persist");
+    tagNames = {};
+    return;
+  }
+
   try {
-    const raw = await fs.readFile(TAG_NAMES_FILE, "utf8");
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      tagNames = parsed;
-    } else {
-      console.log("[Tags] tag-names.json has invalid format; starting empty");
-      tagNames = {};
-    }
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS tag_names (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
   } catch (err) {
-    if (err.code !== "ENOENT") {
-      console.error("[Tags] Failed to load tag names:", err?.message || err);
-    }
+    console.error("[Tags] Failed to create table:", err?.message || err);
+  }
+
+  try {
+    const result = await pool.query("SELECT id, name FROM tag_names");
+    tagNames = {};
+    result.rows.forEach((row) => {
+      if (row?.id) {
+        tagNames[row.id] = row.name || "";
+      }
+    });
+    console.log(`[Tags] Loaded ${Object.keys(tagNames).length} tag names`);
+  } catch (err) {
+    console.error("[Tags] Failed to load tag names:", err?.message || err);
     tagNames = {};
   }
 }
 
-async function saveTagNames() {
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    const payload = JSON.stringify(tagNames, null, 2);
-    await fs.writeFile(TAG_NAMES_FILE, payload, "utf8");
-  } catch (err) {
-    console.error("[Tags] Failed to save tag names:", err?.message || err);
-  }
+async function upsertTagName(id, name) {
+  if (!pool) return;
+  await pool.query(
+    `INSERT INTO tag_names (id, name, updated_at)
+     VALUES ($1, $2, NOW())
+     ON CONFLICT (id) DO UPDATE
+     SET name = EXCLUDED.name, updated_at = NOW()`,
+    [id, name]
+  );
 }
 
-loadTagNames();
+async function deleteTagName(id) {
+  if (!pool) return;
+  await pool.query("DELETE FROM tag_names WHERE id = $1", [id]);
+}
+
+initTagNames();
 
 app.get("/health", (req, res) => {
   const status = {
@@ -110,7 +136,7 @@ wss.on("connection", (ws, req) => {
       return; 
     }
 
-    // ESP32が接続したことを登録
+    // ESP32縺梧磁邯壹＠縺溘％縺ｨ繧堤匳骭ｲ
     if (data.type === "esp_online") {
       const oldESP32 = esp32Socket;
       esp32Socket = ws;
@@ -205,11 +231,11 @@ wss.on("connection", (ws, req) => {
 
       if (name) {
         tagNames[id] = name;
+        await upsertTagName(id, name);
       } else {
         delete tagNames[id];
+        await deleteTagName(id);
       }
-
-      await saveTagNames();
 
       const payload = JSON.stringify({
         type: "tag_name_updated",
@@ -225,11 +251,11 @@ wss.on("connection", (ws, req) => {
 
       return;
     }
-    // ESP32からの読み取り結果
+    // ESP32縺九ｉ縺ｮ隱ｭ縺ｿ蜿悶ｊ邨先棡
     if (data.type === "rfid_result") {
       console.log(`[${new Date().toISOString()}] [RFID] Result from ESP32: ${data.count} tags`);
       
-      // タグ詳細をログ出力
+      // 繧ｿ繧ｰ隧ｳ邏ｰ繧偵Ο繧ｰ蜃ｺ蜉・
       if (data.tags && data.tags.length > 0) {
         data.tags.forEach((tag, idx) => {
           console.log(`[RFID] Tag ${idx + 1}: ID=${tag.id}, RSSI=${tag.rssi}dBm`);
@@ -361,3 +387,4 @@ server.listen(PORT, () => {
   console.log(`[Server] Node version: ${process.version}`);
   console.log(`[Server] Platform: ${process.platform}`);
 });
+
