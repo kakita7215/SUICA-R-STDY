@@ -345,11 +345,6 @@
       }
       const unnamedTags = tags.filter((tag) => !(tag.name && String(tag.name).trim()));
       allowNewRegistration = unnamedTags.length <= 1;
-      if (unnamedTags.length > 1){
-        const t = I18N[lang];
-        el("tagBody").innerHTML = `<tr><td colspan="7">${t.multiNewError}</td></tr>`;
-        return;
-      }
       const t = I18N[lang];
       const rows = tags.map((tag) => {
         const epc = tag.id ?? tag.epc ?? "";
