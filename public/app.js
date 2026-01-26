@@ -454,8 +454,6 @@
     el("btnINV").addEventListener("click", sendRfidRead);
         el("btnApply").addEventListener("click", sendConfig);
     el("btnCopyAll").addEventListener("click", applyBulkToAntFields);
-    repeatAll.addEventListener("input", applyBulkToAntFields);
-    windowAll.addEventListener("input", applyBulkToAntFields);
     el("btnFW").addEventListener("click", () => sendCommand("get_fw"));
     el("btnTEMP").addEventListener("click", () => sendCommand("get_temp"));
     el("btnRL").addEventListener("click", () => sendCommand("get_return_loss"));
