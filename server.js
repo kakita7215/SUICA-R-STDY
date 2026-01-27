@@ -172,7 +172,7 @@ app.get("/tags", async (req, res) => {
       .grid{width:var(--grid-width);}
       .row{display:grid;gap:var(--col-gap);margin-bottom:12px;grid-template-columns:var(--col-no) var(--col-id) var(--col-name) var(--col-status) var(--col-updated);align-items:center;}
       .row.small{display:flex;gap:10px;align-items:center;margin-bottom:12px;}
-      input,button{font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#171a21;color:#e9edf5;}
+      input,button{font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#171a21;color:#e9edf5;box-sizing:border-box;}
       input{width:100%;}
       #token{max-width:220px;}
       #btnLoad{width:100px;}
