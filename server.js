@@ -157,29 +157,40 @@ app.get("/tags", async (req, res) => {
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Tag Names Editor</title>
     <style>
+      :root{
+        --col-no: 70px;
+        --col-id: 340px;
+        --col-name: 240px;
+        --col-status: 140px;
+        --col-updated: 160px;
+        --col-gap: 10px;
+        --grid-width: 970px;
+      }
       body{font-family:system-ui,Segoe UI,Meiryo,sans-serif;background:#0f1115;color:#e9edf5;margin:0;padding:24px;}
       h1{margin:0 0 12px 0;font-size:22px;}
-      .row{display:grid;gap:10px;margin-bottom:12px;grid-template-columns:70px 340px 220px 140px 160px;align-items:center;}
+      .wrap{width:100%;overflow-x:auto;}
+      .grid{width:var(--grid-width);}
+      .row{display:grid;gap:var(--col-gap);margin-bottom:12px;grid-template-columns:var(--col-no) var(--col-id) var(--col-name) var(--col-status) var(--col-updated);align-items:center;}
       .row.small{display:flex;gap:10px;align-items:center;margin-bottom:12px;}
       input,button{font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#171a21;color:#e9edf5;}
       input{width:100%;}
-      #token{max-width:240px;}
+      #token{max-width:220px;}
       #btnLoad{width:100px;}
       #btnSave{width:140px;}
       #btnDelete{width:120px;}
-      button{white-space:nowrap;}
-      input.col-no{max-width:70px;}
-      .col-id{max-width:340px;}
-      .col-name{max-width:220px;}
-      input[type="number"]{appearance:textfield;}
-      input[type="number"]::-webkit-outer-spin-button,
-      input[type="number"]::-webkit-inner-spin-button{appearance:none;margin:0;}
-      button{cursor:pointer;}
-      table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+      button{white-space:nowrap;cursor:pointer;}
+      input.col-no{max-width:var(--col-no);}
+      .col-id{max-width:var(--col-id);}
+      .col-name{max-width:var(--col-name);}
+      table{width:var(--grid-width);border-collapse:collapse;font-size:13px;margin-top:10px;}
       th,td{border-top:1px solid #2a2f3a;padding:8px;text-align:left;}
       th{color:#a1a6b3;}
       .muted{color:#a1a6b3;font-size:12px;}
-      /* レイアウト崩れ防止のため固定幅 */
+      col.col-no{width:var(--col-no);}
+      col.col-id{width:var(--col-id);}
+      col.col-name{width:var(--col-name);}
+      col.col-status{width:var(--col-status);}
+      col.col-updated{width:var(--col-updated);}
     </style>
   </head>
   <body>
@@ -188,25 +199,29 @@ app.get("/tags", async (req, res) => {
       <input id="token" type="password" placeholder="編集パスワード" />
       <button id="btnLoad">読み込み</button>
     </div>
-    <div class="row">
-      <input id="tagNo" class="col-no" type="text" inputmode="numeric" placeholder="No." />
-      <input id="tagId" class="col-id" type="text" placeholder="Tag ID" />
-      <input id="tagName" class="col-name" type="text" placeholder="Name" />
-      <button id="btnSave">保存/更新</button>
-      <button id="btnDelete">削除</button>
+    <div class="wrap">
+      <div class="grid">
+        <div class="row">
+          <input id="tagNo" class="col-no" type="text" inputmode="numeric" placeholder="No." />
+          <input id="tagId" class="col-id" type="text" placeholder="Tag ID" />
+          <input id="tagName" class="col-name" type="text" placeholder="Name" />
+          <button id="btnSave">保存/更新</button>
+          <button id="btnDelete">削除</button>
+        </div>
+        <div class="muted">※保存/削除はパスワード必須</div>
+        <table>
+          <colgroup>
+            <col class="col-no" />
+            <col class="col-id" />
+            <col class="col-name" />
+            <col class="col-status" />
+            <col class="col-updated" />
+          </colgroup>
+          <thead><tr><th>No.</th><th>Tag ID</th><th>NAME</th><th>状態</th><th>更新日時</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
     </div>
-    <div class="muted">※保存/削除はパスワード必須</div>
-    <table>
-      <colgroup>
-        <col style="width:70px" />
-        <col style="width:340px" />
-        <col style="width:220px" />
-        <col style="width:140px" />
-        <col style="width:160px" />
-      </colgroup>
-      <thead><tr><th>No.</th><th>Tag ID</th><th>NAME</th><th>状態</th><th>更新日時</th></tr></thead>
-      <tbody id="rows"></tbody>
-    </table>
     <script>
       const rowsEl = document.getElementById("rows");
       const tokenEl = document.getElementById("token");
