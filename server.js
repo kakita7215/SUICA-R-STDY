@@ -159,8 +159,12 @@ app.get("/tags", async (req, res) => {
     <style>
       body{font-family:system-ui,Segoe UI,Meiryo,sans-serif;background:#0f1115;color:#e9edf5;margin:0;padding:24px;}
       h1{margin:0 0 12px 0;font-size:22px;}
-      .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+      .row{display:grid;gap:8px;margin-bottom:12px;grid-template-columns:60px 320px 200px auto auto;align-items:center;}
+      .row.small{grid-template-columns:1fr auto;}
       input,button{font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#171a21;color:#e9edf5;}
+      input.col-no{width:60px;}
+      input.col-id{width:320px;}
+      input.col-name{width:200px;}
       button{cursor:pointer;}
       table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
       th,td{border-top:1px solid #2a2f3a;padding:8px;text-align:left;}
@@ -170,19 +174,26 @@ app.get("/tags", async (req, res) => {
   </head>
   <body>
     <h1>Tag Names Editor</h1>
-    <div class="row">
+    <div class="row small">
       <input id="token" type="password" placeholder="編集パスワード" />
       <button id="btnLoad">読み込み</button>
     </div>
     <div class="row">
-      <input id="tagNo" type="number" min="1" placeholder="No." />
-      <input id="tagId" type="text" placeholder="Tag ID" />
-      <input id="tagName" type="text" placeholder="Name" />
+      <input id="tagNo" class="col-no" type="number" min="1" placeholder="No." />
+      <input id="tagId" class="col-id" type="text" placeholder="Tag ID" />
+      <input id="tagName" class="col-name" type="text" placeholder="Name" />
       <button id="btnSave">保存/更新</button>
       <button id="btnDelete">削除</button>
     </div>
     <div class="muted">※保存/削除はパスワード必須</div>
     <table>
+      <colgroup>
+        <col style="width:60px" />
+        <col style="width:320px" />
+        <col style="width:200px" />
+        <col style="width:100px" />
+        <col />
+      </colgroup>
       <thead><tr><th>No.</th><th>Tag ID</th><th>NAME</th><th>状態</th><th>更新日時</th></tr></thead>
       <tbody id="rows"></tbody>
     </table>
