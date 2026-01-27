@@ -102,6 +102,19 @@ app.get("/health", (req, res) => {
   res.json(status);
 });
 
+app.get("/tags", async (req, res) => {
+  if (!pool) {
+    res.status(500).json({ error: "DATABASE_URL not set" });
+    return;
+  }
+  try {
+    const result = await pool.query("SELECT id, name, updated_at FROM tag_names ORDER BY updated_at DESC");
+    res.json({ count: result.rows.length, rows: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: err?.message || "DB error" });
+  }
+});
+
 let esp32Socket = null;
 
 function heartbeat() { 
