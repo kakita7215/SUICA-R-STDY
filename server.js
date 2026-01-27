@@ -10,6 +10,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+app.use(express.json({ limit: "256kb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
@@ -31,6 +32,7 @@ const PORT = process.env.PORT || 3000;
 // タグ名はPostgreSQLに保存します（Render PostgreSQL想定）。
 // 接続先は DATABASE_URL を使用します。
 const DATABASE_URL = process.env.DATABASE_URL || "";
+const TAG_EDIT_PASSWORD = process.env.TAG_EDIT_PASSWORD || "";
 const pool = DATABASE_URL
   ? new pg.Pool({
       connectionString: DATABASE_URL,
@@ -102,6 +104,19 @@ app.get("/health", (req, res) => {
   res.json(status);
 });
 
+function requireTagEditAuth(req, res) {
+  if (!TAG_EDIT_PASSWORD) {
+    res.status(500).json({ error: "TAG_EDIT_PASSWORD not set" });
+    return false;
+  }
+  const token = req.get("x-edit-token") || "";
+  if (token !== TAG_EDIT_PASSWORD) {
+    res.status(401).json({ error: "Unauthorized" });
+    return false;
+  }
+  return true;
+}
+
 app.get("/tags", async (req, res) => {
   if (!pool) {
     res.status(500).json({ error: "DATABASE_URL not set" });
@@ -120,7 +135,157 @@ app.get("/tags", async (req, res) => {
       res.type("text/plain").send(lines.join("\n"));
       return;
     }
+    if (req.query.format === "json") {
+      res.json({ count: result.rows.length, rows: result.rows });
+      return;
+    }
+    res.type("text/html").send(`<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tag Names Editor</title>
+    <style>
+      body{font-family:system-ui,Segoe UI,Meiryo,sans-serif;background:#0f1115;color:#e9edf5;margin:0;padding:24px;}
+      h1{margin:0 0 12px 0;font-size:22px;}
+      .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+      input,button{font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#171a21;color:#e9edf5;}
+      button{cursor:pointer;}
+      table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+      th,td{border-top:1px solid #2a2f3a;padding:8px;text-align:left;}
+      th{color:#a1a6b3;}
+      .muted{color:#a1a6b3;font-size:12px;}
+    </style>
+  </head>
+  <body>
+    <h1>Tag Names Editor</h1>
+    <div class="row">
+      <input id="token" type="password" placeholder="編集パスワード" />
+      <button id="btnLoad">読み込み</button>
+    </div>
+    <div class="row">
+      <input id="tagId" type="text" placeholder="Tag ID" />
+      <input id="tagName" type="text" placeholder="Name" />
+      <button id="btnSave">保存/更新</button>
+      <button id="btnDelete">削除</button>
+    </div>
+    <div class="muted">※保存/削除はパスワード必須</div>
+    <table>
+      <thead><tr><th>No.</th><th>Tag ID</th><th>NAME</th><th>更新日時</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <script>
+      const rowsEl = document.getElementById("rows");
+      const tokenEl = document.getElementById("token");
+      const idEl = document.getElementById("tagId");
+      const nameEl = document.getElementById("tagName");
+
+      async function fetchTags() {
+        const token = tokenEl.value || "";
+        const res = await fetch("/api/tags", {
+          headers: { "x-edit-token": token }
+        });
+        if (!res.ok) {
+          alert("読み込み失敗: " + res.status);
+          return;
+        }
+        const data = await res.json();
+        rowsEl.innerHTML = data.rows.map((r, i) => \`
+          <tr>
+            <td>\${i + 1}</td>
+            <td>\${r.id}</td>
+            <td>\${r.name ?? ""}</td>
+            <td>\${r.updated_at ?? ""}</td>
+          </tr>\`).join("");
+      }
+
+      async function saveTag() {
+        const token = tokenEl.value || "";
+        const id = idEl.value.trim();
+        const name = nameEl.value.trim();
+        if (!id || !name) { alert("Tag ID と Name を入力してください"); return; }
+        const res = await fetch("/api/tags", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-edit-token": token },
+          body: JSON.stringify({ id, name })
+        });
+        if (!res.ok) { alert("保存失敗: " + res.status); return; }
+        await fetchTags();
+      }
+
+      async function deleteTag() {
+        const token = tokenEl.value || "";
+        const id = idEl.value.trim();
+        if (!id) { alert("Tag ID を入力してください"); return; }
+        const res = await fetch("/api/tags/" + encodeURIComponent(id), {
+          method: "DELETE",
+          headers: { "x-edit-token": token }
+        });
+        if (!res.ok) { alert("削除失敗: " + res.status); return; }
+        await fetchTags();
+      }
+
+      document.getElementById("btnLoad").addEventListener("click", fetchTags);
+      document.getElementById("btnSave").addEventListener("click", saveTag);
+      document.getElementById("btnDelete").addEventListener("click", deleteTag);
+    </script>
+  </body>
+</html>`);
+  } catch (err) {
+    res.status(500).json({ error: err?.message || "DB error" });
+  }
+});
+
+app.get("/api/tags", async (req, res) => {
+  if (!pool) {
+    res.status(500).json({ error: "DATABASE_URL not set" });
+    return;
+  }
+  if (!requireTagEditAuth(req, res)) return;
+  try {
+    const result = await pool.query("SELECT id, name, updated_at FROM tag_names ORDER BY updated_at DESC");
     res.json({ count: result.rows.length, rows: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: err?.message || "DB error" });
+  }
+});
+
+app.post("/api/tags", async (req, res) => {
+  if (!pool) {
+    res.status(500).json({ error: "DATABASE_URL not set" });
+    return;
+  }
+  if (!requireTagEditAuth(req, res)) return;
+  const id = typeof req.body?.id === "string" ? req.body.id.trim() : "";
+  const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
+  if (!id || !name) {
+    res.status(400).json({ error: "id and name are required" });
+    return;
+  }
+  try {
+    await upsertTagName(id, name);
+    tagNames[id] = name;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err?.message || "DB error" });
+  }
+});
+
+app.delete("/api/tags/:id", async (req, res) => {
+  if (!pool) {
+    res.status(500).json({ error: "DATABASE_URL not set" });
+    return;
+  }
+  if (!requireTagEditAuth(req, res)) return;
+  const id = typeof req.params.id === "string" ? req.params.id.trim() : "";
+  if (!id) {
+    res.status(400).json({ error: "id is required" });
+    return;
+  }
+  try {
+    await deleteTagName(id);
+    delete tagNames[id];
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err?.message || "DB error" });
   }
