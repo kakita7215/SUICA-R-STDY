@@ -159,7 +159,7 @@ app.get("/tags", async (req, res) => {
     <style>
       body{font-family:system-ui,Segoe UI,Meiryo,sans-serif;background:#0f1115;color:#e9edf5;margin:0;padding:24px;}
       h1{margin:0 0 12px 0;font-size:22px;}
-      .row{display:grid;gap:10px;margin-bottom:12px;grid-template-columns:70px 340px 220px 140px 100px;align-items:center;}
+      .row{display:grid;gap:10px;margin-bottom:12px;grid-template-columns:70px minmax(220px,1fr) minmax(180px,1fr) 140px 100px;align-items:center;}
       .row.small{display:flex;gap:10px;align-items:center;margin-bottom:12px;}
       input,button{font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#171a21;color:#e9edf5;}
       input{width:100%;}
@@ -176,6 +176,15 @@ app.get("/tags", async (req, res) => {
       th,td{border-top:1px solid #2a2f3a;padding:8px;text-align:left;}
       th{color:#a1a6b3;}
       .muted{color:#a1a6b3;font-size:12px;}
+      @media (max-width: 900px){
+        .row{grid-template-columns:70px 1fr 1fr;grid-auto-rows:auto;}
+        #btnSave{grid-column:1 / 3;}
+        #btnDelete{grid-column:3 / 4;}
+      }
+      @media (max-width: 620px){
+        .row{grid-template-columns:1fr; }
+        #btnSave,#btnDelete{width:100%;}
+      }
     </style>
   </head>
   <body>
