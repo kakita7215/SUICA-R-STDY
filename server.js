@@ -180,6 +180,7 @@ app.get("/tags", async (req, res) => {
       #btnSave{width:140px;}
       #btnDelete{width:120px;}
       #btnClear{width:120px;}
+      #btnSave{margin-left:8px;}
       button{white-space:nowrap;cursor:pointer;}
       input.col-no{max-width:var(--col-no);}
       .col-id{max-width:var(--col-id);}
