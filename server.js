@@ -161,16 +161,17 @@ app.get("/tags", async (req, res) => {
         --col-no: 70px;
         --col-id: 340px;
         --col-name: 240px;
+        --col-clear: 110px;
         --col-status: 140px;
         --col-updated: 160px;
         --col-gap: 10px;
-        --grid-width: 970px;
+        --grid-width: 1070px;
       }
       body{font-family:system-ui,Segoe UI,Meiryo,sans-serif;background:#0f1115;color:#e9edf5;margin:0;padding:24px;}
       h1{margin:0 0 12px 0;font-size:22px;}
       .wrap{width:100%;overflow-x:auto;}
       .grid{width:var(--grid-width);}
-      .row{display:grid;gap:var(--col-gap);margin-bottom:12px;grid-template-columns:var(--col-no) var(--col-id) var(--col-name) var(--col-status) var(--col-updated);align-items:center;}
+      .row{display:grid;gap:var(--col-gap);margin-bottom:12px;grid-template-columns:var(--col-no) var(--col-id) var(--col-name) var(--col-clear) var(--col-status) var(--col-updated);align-items:center;}
       .row.small{display:flex;gap:10px;align-items:center;margin-bottom:12px;}
       input,button{font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#171a21;color:#e9edf5;box-sizing:border-box;}
       input{width:100%;}
@@ -206,11 +207,9 @@ app.get("/tags", async (req, res) => {
           <input id="tagNo" class="col-no" type="text" inputmode="numeric" placeholder="No." />
           <input id="tagId" class="col-id" type="text" placeholder="Tag ID" />
           <input id="tagName" class="col-name" type="text" placeholder="Name" />
+          <button id="btnClear">クリア</button>
           <button id="btnSave">保存/更新</button>
           <button id="btnDelete">削除</button>
-        </div>
-        <div class="row small">
-          <button id="btnClear">クリア</button>
         </div>
         <div class="muted">※保存/削除はパスワード必須</div>
         <table>
