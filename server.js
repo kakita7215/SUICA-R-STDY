@@ -161,10 +161,10 @@ app.get("/tags", async (req, res) => {
         --col-no: 70px;
         --col-id: 340px;
         --col-name: 240px;
-        --col-status: 140px;
-        --col-updated: 160px;
+        --col-status: 280px;
+        --col-updated: 220px;
         --col-gap: 12px;
-        --grid-width: 1000px;
+        --grid-width: 1050px;
       }
       body{font-family:system-ui,Segoe UI,Meiryo,sans-serif;background:#0f1115;color:#e9edf5;margin:0;padding:24px;}
       h1{margin:0 0 12px 0;font-size:22px;}
@@ -179,8 +179,7 @@ app.get("/tags", async (req, res) => {
       #btnSave{width:140px;}
       #btnDelete{width:120px;}
       #btnClear{width:90px;}
-      .name-wrap{display:flex;gap:8px;align-items:center;}
-      .name-wrap input{flex:1 1 auto;min-width:0;}
+      .actions{display:flex;gap:12px;align-items:center;}
       button{white-space:nowrap;cursor:pointer;}
       input.col-no{max-width:var(--col-no);}
       .col-id{max-width:var(--col-id);}
@@ -207,11 +206,11 @@ app.get("/tags", async (req, res) => {
         <div class="row">
           <input id="tagNo" class="col-no" type="text" inputmode="numeric" placeholder="No." />
           <input id="tagId" class="col-id" type="text" placeholder="Tag ID" />
-          <div class="name-wrap col-name">
-            <input id="tagName" type="text" placeholder="Name" />
+          <input id="tagName" class="col-name" type="text" placeholder="Name" />
+          <div class="actions">
             <button id="btnClear">クリア</button>
+            <button id="btnSave">保存/更新</button>
           </div>
-          <button id="btnSave">保存/更新</button>
           <button id="btnDelete">削除</button>
         </div>
         <div class="muted">※保存/削除はパスワード必須</div>
