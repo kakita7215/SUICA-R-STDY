@@ -246,9 +246,11 @@ app.get("/tags", async (req, res) => {
       function handleIdInput() {
         const id = idEl.value.trim();
         if (!id) return;
-        const idx = lastRows.findIndex((r) => String(r.id || "") === id);
-        if (idx >= 0) {
-          setFieldsByRow(lastRows[idx], idx);
+        const matches = lastRows
+          .map((r, i) => ({ row: r, index: i }))
+          .filter((item) => String(item.row.id || "").startsWith(id));
+        if (matches.length === 1) {
+          setFieldsByRow(matches[0].row, matches[0].index);
         }
       }
 
@@ -257,7 +259,7 @@ app.get("/tags", async (req, res) => {
         if (!name) return;
         const matches = lastRows
           .map((r, i) => ({ row: r, index: i }))
-          .filter((item) => (item.row.name ?? "") === name);
+          .filter((item) => String(item.row.name ?? "").startsWith(name));
         if (matches.length === 1) {
           setFieldsByRow(matches[0].row, matches[0].index);
         }
