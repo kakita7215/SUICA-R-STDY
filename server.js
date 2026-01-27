@@ -230,6 +230,39 @@ app.get("/tags", async (req, res) => {
       const nameEl = document.getElementById("tagName");
       let lastRows = [];
 
+      function setFieldsByRow(row, index) {
+        if (!row) return;
+        noEl.value = String(index + 1);
+        idEl.value = row.id || "";
+        nameEl.value = row.name ?? "";
+      }
+
+      function handleNoInput() {
+        const no = Number(noEl.value);
+        if (!Number.isFinite(no) || no < 1 || no > lastRows.length) return;
+        setFieldsByRow(lastRows[no - 1], no - 1);
+      }
+
+      function handleIdInput() {
+        const id = idEl.value.trim();
+        if (!id) return;
+        const idx = lastRows.findIndex((r) => String(r.id || "") === id);
+        if (idx >= 0) {
+          setFieldsByRow(lastRows[idx], idx);
+        }
+      }
+
+      function handleNameInput() {
+        const name = nameEl.value.trim();
+        if (!name) return;
+        const matches = lastRows
+          .map((r, i) => ({ row: r, index: i }))
+          .filter((item) => (item.row.name ?? "") === name);
+        if (matches.length === 1) {
+          setFieldsByRow(matches[0].row, matches[0].index);
+        }
+      }
+
       async function fetchTags() {
         const token = tokenEl.value || "";
         const res = await fetch("/api/tags", {
@@ -290,6 +323,9 @@ app.get("/tags", async (req, res) => {
       document.getElementById("btnLoad").addEventListener("click", fetchTags);
       document.getElementById("btnSave").addEventListener("click", saveTag);
       document.getElementById("btnDelete").addEventListener("click", deleteTag);
+      noEl.addEventListener("input", handleNoInput);
+      idEl.addEventListener("input", handleIdInput);
+      nameEl.addEventListener("input", handleNameInput);
     </script>
   </body>
 </html>`);
