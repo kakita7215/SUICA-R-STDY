@@ -325,7 +325,7 @@ wss.on("connection", (ws, req) => {
       return; 
     }
 
-    // ESP32縺梧磁邯壹＠縺溘％縺ｨ繧堤匳骭ｲ
+    // ESP32が接続したことを登録
     if (data.type === "esp_online") {
       const oldESP32 = esp32Socket;
       esp32Socket = ws;
@@ -440,11 +440,11 @@ wss.on("connection", (ws, req) => {
 
       return;
     }
-    // ESP32縺九ｉ縺ｮ隱ｭ縺ｿ蜿悶ｊ邨先棡
+    // ESP32からの読み取り結果
     if (data.type === "rfid_result") {
       console.log(`[${new Date().toISOString()}] [RFID] Result from ESP32: ${data.count} tags`);
       
-      // 繧ｿ繧ｰ隧ｳ邏ｰ繧偵Ο繧ｰ蜃ｺ蜉・
+      // タグ詳細をログ出力
       if (data.tags && data.tags.length > 0) {
         data.tags.forEach((tag, idx) => {
           console.log(`[RFID] Tag ${idx + 1}: ID=${tag.id}, RSSI=${tag.rssi}dBm`);
