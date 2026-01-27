@@ -33,6 +33,10 @@
         saveLabel: "저장",
         editLabel: "수정",
         promptName: "이름을 입력해주세요",
+        unnamedNewLabel: "신규",
+        unnamedExistingLabel: "미등록",
+        confNewLabel: "신규",
+        confExistingLabel: "미등록",
         fwLabel: "FW",
         tempLabel: "온도",
         extTempLabel: "외부 온도",
@@ -84,6 +88,10 @@
         saveLabel: "Save",
         editLabel: "Edit",
         promptName: "名前を入力してください",
+        unnamedNewLabel: "新規",
+        unnamedExistingLabel: "未登録",
+        confNewLabel: "新規",
+        confExistingLabel: "未登録",
         fwLabel: "FW",
         tempLabel: "TEMP",
         extTempLabel: "Ext Temp",
@@ -351,14 +359,22 @@
         const rssi = Number(tag.rssi ?? 0);
         const dupCount = Number(tag.count ?? 1);
         const name = (tag.name && String(tag.name).trim()) ? String(tag.name).trim() : "";
+        const isUnnamed = !name;
+        const nameState = tag.nameState === "new" ? "new" : "existing";
+        const stateLabel = isUnnamed
+          ? (nameState === "new" ? t.unnamedNewLabel : t.unnamedExistingLabel)
+          : "";
         const show = (v) => (Number.isFinite(v) && v !== 0 ? v : "-");
         const showCount = (v) => (Number.isFinite(v) ? v : "-");
         const nameCell = name
           ? `<div>${name}</div>
              <button class="btn" data-action="edit-name" data-id="${epc}">${t.editLabel}</button>`
-          : `<div>${t.newItemLabel}</div>
+          : `<div>${stateLabel || t.newItemLabel}</div>
              <input class="tag-name-input" data-id="${epc}" type="text" maxlength="40" placeholder="${t.namePlaceholder}" />
              <button class="btn" data-action="save-name" data-id="${epc}">${t.saveLabel}</button>`;
+        const confText = isUnnamed
+          ? (nameState === "new" ? t.confNewLabel : t.confExistingLabel)
+          : showCount(dupCount);
         return `
           <tr>
             <td>${epc}</td>
@@ -367,7 +383,7 @@
             <td>-</td>
             <td>-</td>
             <td>${show(rssi)}</td>
-            <td>${showCount(dupCount)}</td>
+            <td>${confText}</td>
           </tr>
         `;
       }).join("");
