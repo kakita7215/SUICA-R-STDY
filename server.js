@@ -159,12 +159,14 @@ app.get("/tags", async (req, res) => {
     <style>
       body{font-family:system-ui,Segoe UI,Meiryo,sans-serif;background:#0f1115;color:#e9edf5;margin:0;padding:24px;}
       h1{margin:0 0 12px 0;font-size:22px;}
-      .row{display:grid;gap:8px;margin-bottom:12px;grid-template-columns:70px minmax(240px,1fr) minmax(180px,1fr) auto auto;align-items:center;}
+      .row{display:grid;gap:8px;margin-bottom:12px;grid-template-columns:70px 320px 200px 110px 90px;align-items:center;}
       .row.small{grid-template-columns:1fr auto;}
       input,button{font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#171a21;color:#e9edf5;}
       input{width:100%;}
       button{white-space:nowrap;}
       input.col-no{max-width:70px;}
+      .col-id{max-width:320px;}
+      .col-name{max-width:200px;}
       button{cursor:pointer;}
       table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
       th,td{border-top:1px solid #2a2f3a;padding:8px;text-align:left;}
@@ -188,10 +190,10 @@ app.get("/tags", async (req, res) => {
     <div class="muted">※保存/削除はパスワード必須</div>
     <table>
       <colgroup>
-        <col style="width:60px" />
+        <col style="width:70px" />
         <col style="width:320px" />
         <col style="width:200px" />
-        <col style="width:100px" />
+        <col style="width:110px" />
         <col />
       </colgroup>
       <thead><tr><th>No.</th><th>Tag ID</th><th>NAME</th><th>状態</th><th>更新日時</th></tr></thead>
