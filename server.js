@@ -178,6 +178,7 @@ app.get("/tags", async (req, res) => {
       #btnLoad{width:100px;}
       #btnSave{width:140px;}
       #btnDelete{width:120px;}
+      #btnClear{width:120px;}
       button{white-space:nowrap;cursor:pointer;}
       input.col-no{max-width:var(--col-no);}
       .col-id{max-width:var(--col-id);}
@@ -208,6 +209,9 @@ app.get("/tags", async (req, res) => {
           <button id="btnSave">保存/更新</button>
           <button id="btnDelete">削除</button>
         </div>
+        <div class="row small">
+          <button id="btnClear">クリア</button>
+        </div>
         <div class="muted">※保存/削除はパスワード必須</div>
         <table>
           <colgroup>
@@ -229,15 +233,22 @@ app.get("/tags", async (req, res) => {
       const idEl = document.getElementById("tagId");
       const nameEl = document.getElementById("tagName");
       let lastRows = [];
+      let autoFilled = false;
 
       function setFieldsByRow(row, index) {
         if (!row) return;
         noEl.value = String(index + 1);
         idEl.value = row.id || "";
         nameEl.value = row.name ?? "";
+        autoFilled = true;
       }
 
       function handleNoInput() {
+        if (!noEl.value.trim()) {
+          autoFilled = false;
+          return;
+        }
+        if (autoFilled) return;
         const no = Number(noEl.value);
         if (!Number.isFinite(no) || no < 1 || no > lastRows.length) return;
         setFieldsByRow(lastRows[no - 1], no - 1);
@@ -245,7 +256,11 @@ app.get("/tags", async (req, res) => {
 
       function handleIdInput() {
         const id = idEl.value.trim();
-        if (!id) return;
+        if (!id) {
+          autoFilled = false;
+          return;
+        }
+        if (autoFilled) return;
         const matches = lastRows
           .map((r, i) => ({ row: r, index: i }))
           .filter((item) => String(item.row.id || "").startsWith(id));
@@ -256,7 +271,11 @@ app.get("/tags", async (req, res) => {
 
       function handleNameInput() {
         const name = nameEl.value.trim();
-        if (!name) return;
+        if (!name) {
+          autoFilled = false;
+          return;
+        }
+        if (autoFilled) return;
         const matches = lastRows
           .map((r, i) => ({ row: r, index: i }))
           .filter((item) => String(item.row.name ?? "").startsWith(name));
@@ -276,6 +295,7 @@ app.get("/tags", async (req, res) => {
         }
         const data = await res.json();
         lastRows = data.rows || [];
+        autoFilled = false;
         rowsEl.innerHTML = lastRows.map((r, i) => \`
           <tr>
             <td>\${i + 1}</td>
@@ -325,6 +345,12 @@ app.get("/tags", async (req, res) => {
       document.getElementById("btnLoad").addEventListener("click", fetchTags);
       document.getElementById("btnSave").addEventListener("click", saveTag);
       document.getElementById("btnDelete").addEventListener("click", deleteTag);
+      document.getElementById("btnClear").addEventListener("click", () => {
+        noEl.value = "";
+        idEl.value = "";
+        nameEl.value = "";
+        autoFilled = false;
+      });
       noEl.addEventListener("input", handleNoInput);
       idEl.addEventListener("input", handleIdInput);
       nameEl.addEventListener("input", handleNameInput);
