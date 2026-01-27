@@ -203,7 +203,7 @@ app.get("/tags", async (req, res) => {
         const token = tokenEl.value || "";
         const id = idEl.value.trim();
         const name = nameEl.value.trim();
-        if (!id || !name) { alert("Tag ID と Name を入力してください"); return; }
+        if (!id) { alert("Tag ID を入力してください"); return; }
         const res = await fetch("/api/tags", {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-edit-token": token },
@@ -258,13 +258,13 @@ app.post("/api/tags", async (req, res) => {
   if (!requireTagEditAuth(req, res)) return;
   const id = typeof req.body?.id === "string" ? req.body.id.trim() : "";
   const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
-  if (!id || !name) {
-    res.status(400).json({ error: "id and name are required" });
+  if (!id) {
+    res.status(400).json({ error: "id is required" });
     return;
   }
   try {
-    await upsertTagName(id, name);
-    tagNames[id] = name;
+    await upsertTagName(id, name || "");
+    tagNames[id] = name || "";
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err?.message || "DB error" });
