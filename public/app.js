@@ -376,7 +376,7 @@
              <button class="btn" data-action="save-name" data-id="${epc}">${t.saveLabel}</button>`;
         const confText = isUnnamed
           ? (nameState === "new" ? t.confNewLabel : t.confExistingLabel)
-          : `${t.confRegisteredLabel} (${showCount(dupCount)})`;
+          : `${showCount(dupCount)}/${t.confRegisteredLabel}`;
         return `
           <tr>
             <td>${epc}</td>
@@ -560,7 +560,6 @@
     // Copy only when the button is pressed.
     connectWs();
   
-
 
 
 
