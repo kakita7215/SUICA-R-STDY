@@ -175,6 +175,7 @@ app.get("/tags", async (req, res) => {
       <button id="btnLoad">読み込み</button>
     </div>
     <div class="row">
+      <input id="tagNo" type="number" min="1" placeholder="No." />
       <input id="tagId" type="text" placeholder="Tag ID" />
       <input id="tagName" type="text" placeholder="Name" />
       <button id="btnSave">保存/更新</button>
@@ -188,8 +189,10 @@ app.get("/tags", async (req, res) => {
     <script>
       const rowsEl = document.getElementById("rows");
       const tokenEl = document.getElementById("token");
+      const noEl = document.getElementById("tagNo");
       const idEl = document.getElementById("tagId");
       const nameEl = document.getElementById("tagName");
+      let lastRows = [];
 
       async function fetchTags() {
         const token = tokenEl.value || "";
@@ -201,7 +204,8 @@ app.get("/tags", async (req, res) => {
           return;
         }
         const data = await res.json();
-        rowsEl.innerHTML = data.rows.map((r, i) => \`
+        lastRows = data.rows || [];
+        rowsEl.innerHTML = lastRows.map((r, i) => \`
           <tr>
             <td>\${i + 1}</td>
             <td>\${r.id}</td>
@@ -211,9 +215,19 @@ app.get("/tags", async (req, res) => {
           </tr>\`).join("");
       }
 
+      function resolveId() {
+        const id = idEl.value.trim();
+        if (id) return id;
+        const no = Number(noEl.value);
+        if (Number.isFinite(no) && no >= 1 && no <= lastRows.length) {
+          return String(lastRows[no - 1].id || "");
+        }
+        return "";
+      }
+
       async function saveTag() {
         const token = tokenEl.value || "";
-        const id = idEl.value.trim();
+        const id = resolveId();
         const name = nameEl.value.trim();
         if (!id) { alert("Tag ID を入力してください"); return; }
         const res = await fetch("/api/tags", {
@@ -227,7 +241,7 @@ app.get("/tags", async (req, res) => {
 
       async function deleteTag() {
         const token = tokenEl.value || "";
-        const id = idEl.value.trim();
+        const id = resolveId();
         if (!id) { alert("Tag ID を入力してください"); return; }
         const res = await fetch("/api/tags/" + encodeURIComponent(id), {
           method: "DELETE",
