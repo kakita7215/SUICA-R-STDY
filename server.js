@@ -164,7 +164,7 @@ app.get("/tags", async (req, res) => {
         --col-clear: 110px;
         --col-status: 140px;
         --col-updated: 160px;
-        --col-gap: 10px;
+        --col-gap: 12px;
         --grid-width: 1070px;
       }
       body{font-family:system-ui,Segoe UI,Meiryo,sans-serif;background:#0f1115;color:#e9edf5;margin:0;padding:24px;}
@@ -180,7 +180,6 @@ app.get("/tags", async (req, res) => {
       #btnSave{width:140px;}
       #btnDelete{width:120px;}
       #btnClear{width:120px;}
-      #btnSave{margin-left:8px;}
       button{white-space:nowrap;cursor:pointer;}
       input.col-no{max-width:var(--col-no);}
       .col-id{max-width:var(--col-id);}
