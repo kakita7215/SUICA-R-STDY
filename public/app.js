@@ -37,6 +37,7 @@
         unnamedExistingLabel: "미등록",
         confNewLabel: "신규",
         confExistingLabel: "미등록",
+        confRegisteredLabel: "등록됨",
         fwLabel: "FW",
         tempLabel: "온도",
         extTempLabel: "외부 온도",
@@ -92,6 +93,7 @@
         unnamedExistingLabel: "未登録",
         confNewLabel: "新規",
         confExistingLabel: "未登録",
+        confRegisteredLabel: "登録済",
         fwLabel: "FW",
         tempLabel: "TEMP",
         extTempLabel: "Ext Temp",
@@ -374,7 +376,7 @@
              <button class="btn" data-action="save-name" data-id="${epc}">${t.saveLabel}</button>`;
         const confText = isUnnamed
           ? (nameState === "new" ? t.confNewLabel : t.confExistingLabel)
-          : showCount(dupCount);
+          : `${t.confRegisteredLabel} (${showCount(dupCount)})`;
         return `
           <tr>
             <td>${epc}</td>
@@ -558,8 +560,6 @@
     // Copy only when the button is pressed.
     connectWs();
   
-    
-
 
 
 
