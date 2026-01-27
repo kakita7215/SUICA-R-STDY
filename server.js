@@ -165,7 +165,7 @@ app.get("/tags", async (req, res) => {
         --col-status: 140px;
         --col-updated: 160px;
         --col-gap: 12px;
-        --grid-width: 1070px;
+        --grid-width: 1120px;
       }
       body{font-family:system-ui,Segoe UI,Meiryo,sans-serif;background:#0f1115;color:#e9edf5;margin:0;padding:24px;}
       h1{margin:0 0 12px 0;font-size:22px;}
