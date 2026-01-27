@@ -109,6 +109,11 @@ app.get("/tags", async (req, res) => {
   }
   try {
     const result = await pool.query("SELECT id, name, updated_at FROM tag_names ORDER BY updated_at DESC");
+    if (req.query.format === "text") {
+      const lines = result.rows.map((row) => `${row.id}\t${row.name ?? ""}`);
+      res.type("text/plain").send(lines.join("\n"));
+      return;
+    }
     res.json({ count: result.rows.length, rows: result.rows });
   } catch (err) {
     res.status(500).json({ error: err?.message || "DB error" });
