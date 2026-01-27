@@ -159,32 +159,27 @@ app.get("/tags", async (req, res) => {
     <style>
       body{font-family:system-ui,Segoe UI,Meiryo,sans-serif;background:#0f1115;color:#e9edf5;margin:0;padding:24px;}
       h1{margin:0 0 12px 0;font-size:22px;}
-      .row{display:grid;gap:10px;margin-bottom:12px;grid-template-columns:70px minmax(220px,1fr) minmax(180px,1fr) 140px 100px;align-items:center;}
+      .row{display:grid;gap:10px;margin-bottom:12px;grid-template-columns:70px 340px 220px 140px 160px;align-items:center;}
       .row.small{display:flex;gap:10px;align-items:center;margin-bottom:12px;}
       input,button{font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#171a21;color:#e9edf5;}
       input{width:100%;}
       #token{max-width:240px;}
       #btnLoad{width:100px;}
       #btnSave{width:140px;}
-      #btnDelete{width:100px;}
+      #btnDelete{width:120px;}
       button{white-space:nowrap;}
       input.col-no{max-width:70px;}
       .col-id{max-width:340px;}
       .col-name{max-width:220px;}
+      input[type="number"]{appearance:textfield;}
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button{appearance:none;margin:0;}
       button{cursor:pointer;}
       table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
       th,td{border-top:1px solid #2a2f3a;padding:8px;text-align:left;}
       th{color:#a1a6b3;}
       .muted{color:#a1a6b3;font-size:12px;}
-      @media (max-width: 900px){
-        .row{grid-template-columns:70px 1fr 1fr;grid-auto-rows:auto;}
-        #btnSave{grid-column:1 / 3;}
-        #btnDelete{grid-column:3 / 4;}
-      }
-      @media (max-width: 620px){
-        .row{grid-template-columns:1fr; }
-        #btnSave,#btnDelete{width:100%;}
-      }
+      /* レイアウト崩れ防止のため固定幅 */
     </style>
   </head>
   <body>
@@ -194,7 +189,7 @@ app.get("/tags", async (req, res) => {
       <button id="btnLoad">読み込み</button>
     </div>
     <div class="row">
-      <input id="tagNo" class="col-no" type="number" min="1" placeholder="No." />
+      <input id="tagNo" class="col-no" type="text" inputmode="numeric" placeholder="No." />
       <input id="tagId" class="col-id" type="text" placeholder="Tag ID" />
       <input id="tagName" class="col-name" type="text" placeholder="Name" />
       <button id="btnSave">保存/更新</button>
@@ -207,7 +202,7 @@ app.get("/tags", async (req, res) => {
         <col style="width:340px" />
         <col style="width:220px" />
         <col style="width:140px" />
-        <col />
+        <col style="width:160px" />
       </colgroup>
       <thead><tr><th>No.</th><th>Tag ID</th><th>NAME</th><th>状態</th><th>更新日時</th></tr></thead>
       <tbody id="rows"></tbody>
