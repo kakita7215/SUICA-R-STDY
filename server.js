@@ -160,9 +160,10 @@ app.get("/tags", async (req, res) => {
       body{font-family:system-ui,Segoe UI,Meiryo,sans-serif;background:#0f1115;color:#e9edf5;margin:0;padding:24px;}
       h1{margin:0 0 12px 0;font-size:22px;}
       .row{display:grid;gap:8px;margin-bottom:12px;grid-template-columns:70px 320px 200px 110px 90px;align-items:center;}
-      .row.small{grid-template-columns:1fr auto;}
+      .row.small{display:flex;gap:8px;align-items:center;margin-bottom:12px;}
       input,button{font-size:14px;padding:8px 10px;border-radius:8px;border:1px solid #2a2f3a;background:#171a21;color:#e9edf5;}
       input{width:100%;}
+      #token{max-width:320px;}
       button{white-space:nowrap;}
       input.col-no{max-width:70px;}
       .col-id{max-width:320px;}
