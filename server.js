@@ -110,9 +110,12 @@ app.get("/tags", async (req, res) => {
   try {
     const result = await pool.query("SELECT id, name, updated_at FROM tag_names ORDER BY updated_at DESC");
     if (req.query.format === "text") {
+      const pad = (v, w) => String(v ?? "").padEnd(w, " ");
       const lines = [
-        "No.\tTag ID\tNAME",
-        ...result.rows.map((row, idx) => `${idx + 1}\t${row.id}\t${row.name ?? ""}`)
+        `${pad("No.", 4)}${pad("Tag ID", 26)}NAME`,
+        ...result.rows.map((row, idx) =>
+          `${pad(idx + 1, 4)}${pad(row.id, 26)}${row.name ?? ""}`
+        )
       ];
       res.type("text/plain").send(lines.join("\n"));
       return;
