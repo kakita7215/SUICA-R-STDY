@@ -94,6 +94,17 @@ async function deleteTagName(id) {
 
 initTagNames();
 
+async function ensureTagExists(id) {
+  if (!pool || !id) return;
+  if (Object.prototype.hasOwnProperty.call(tagNames, id)) return;
+  try {
+    await upsertTagName(id, "");
+    tagNames[id] = "";
+  } catch (err) {
+    console.error("[Tags] Failed to insert empty name:", err?.message || err);
+  }
+}
+
 app.get("/health", (req, res) => {
   const status = {
     status: "running",
@@ -171,7 +182,7 @@ app.get("/tags", async (req, res) => {
     </div>
     <div class="muted">※保存/削除はパスワード必須</div>
     <table>
-      <thead><tr><th>No.</th><th>Tag ID</th><th>NAME</th><th>更新日時</th></tr></thead>
+      <thead><tr><th>No.</th><th>Tag ID</th><th>NAME</th><th>状態</th><th>更新日時</th></tr></thead>
       <tbody id="rows"></tbody>
     </table>
     <script>
@@ -195,6 +206,7 @@ app.get("/tags", async (req, res) => {
             <td>\${i + 1}</td>
             <td>\${r.id}</td>
             <td>\${r.name ?? ""}</td>
+            <td>\${r.name ? "登録済み" : "未登録"}</td>
             <td>\${r.updated_at ?? ""}</td>
           </tr>\`).join("");
       }
@@ -453,10 +465,24 @@ wss.on("connection", (ws, req) => {
       
 
       if (Array.isArray(data.tags)) {
+        const uniqueIds = new Set();
+        data.tags.forEach((tag) => {
+          const id = typeof tag.id === "string" ? tag.id : String(tag.id || "");
+          if (id) uniqueIds.add(id);
+        });
+        const nameStateById = {};
+        for (const id of uniqueIds) {
+          const hasEntry = Object.prototype.hasOwnProperty.call(tagNames, id);
+          nameStateById[id] = hasEntry ? "existing" : "new";
+          if (!hasEntry) {
+            await ensureTagExists(id);
+          }
+        }
         data.tags = data.tags.map((tag) => {
           const id = typeof tag.id === "string" ? tag.id : String(tag.id || "");
           const name = id && tagNames[id] ? tagNames[id] : "";
-          return { ...tag, id, name };
+          const nameState = nameStateById[id] || "existing";
+          return { ...tag, id, name, nameState };
         });
       }
       let sent = 0;
